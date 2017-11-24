@@ -1,0 +1,17 @@
+sudo: required
+
+language: java
+
+jdk: openjdk8
+
+services:
+  - docker
+
+env:
+  - NXF_VER=0.25.6 PROFILE=singularity TEST=ALL TOOL_INSTALL=all
+
+install: # Install Nextflow (and Singularity if needed)
+  - "./scripts/travis-install.sh --tool $TOOL_INSTALL"
+
+script:
+  - "./scripts/travis-test.sh --profile $PROFILE --test $TEST"
