@@ -16,5 +16,10 @@ $ tar xjvf test-data/test-data-tiny.tar.bz2 -C test-data
 $ nextflow run main.nf
 ```
 
+## Authors
+
+- [Johan Viklund](https://github.com/viklund)
+
+
 [travis-badge]: https://api.travis-ci.org/NBISweden/K9-WGS-Pipeline.svg
 [travis-link]: https://travis-ci.org/NBISweden/K9-WGS-Pipeline
