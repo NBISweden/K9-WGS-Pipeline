@@ -10,7 +10,8 @@ services:
 env:
   - NXF_VER=0.25.6 PROFILE=singularity TEST=ALL TOOL_INSTALL=all SGT_VER=2.4.1
 
-install: # Install Nextflow (and Singularity if needed)
+install:
+  - sudo apt-get install squashfs-tools
   - "./scripts/travis-install.sh --tool $TOOL_INSTALL"
 
 script:
