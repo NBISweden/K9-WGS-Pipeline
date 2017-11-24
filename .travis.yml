@@ -14,4 +14,4 @@ install: # Install Nextflow (and Singularity if needed)
   - "./scripts/travis-install.sh --tool $TOOL_INSTALL"
 
 script:
-  - "./scripts/travis-test.sh --profile $PROFILE --test $TEST"
+  - "./scripts/travis-test.sh"
