@@ -5,15 +5,16 @@ Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/xenial64"
 
   config.vm.provider "virtualbox" do |vb|
-    vb.memory = "4096"
+    vb.memory = "8128"
+    vb.cpus = 4
   end
 
   config.vm.provision "shell", inline: <<-SHELL
     # Dependencies
     apt-get update
     apt-get -y install build-essential curl git sudo man vim autoconf libtool \
-        python-minimal python3 openjdk-8-jre linux-image-extra-$(uname -r)
-        linux-image-extra-virtual apt-transport-https ca-certificates
+        python-minimal python3 openjdk-8-jre linux-image-extra-$(uname -r) \
+        linux-image-extra-virtual apt-transport-https ca-certificates \
         software-properties-common
 
     # Singularity
@@ -31,6 +32,8 @@ Vagrant.configure("2") do |config|
     mv nextflow /home/ubuntu/bin
     chown -R ubuntu:ubuntu /home/ubuntu/bin
 
+    su ubuntu -c /home/ubuntu/bin/nextflow # Downloads all dependencies
+
     # Docker
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
     sudo add-apt-repository \
@@ -38,6 +41,6 @@ Vagrant.configure("2") do |config|
         $(lsb_release -cs) \
         stable"
     apt-get update
-    apt-get install docker-ce
+    apt-get -y install docker-ce
   SHELL
 end
