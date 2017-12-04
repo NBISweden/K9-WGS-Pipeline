@@ -15,5 +15,4 @@ install:
   - "./scripts/travis-install.sh --tool $TOOL_INSTALL"
 
 script:
-  - "tar xjvf test-data/test-data-tiny.tar.bz2 -C test-data"
   - "./scripts/travis-test.sh"
