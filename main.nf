@@ -50,3 +50,29 @@ process gatk_realign {
         -o file.realigned.bam
     """
 }
+
+
+process mark_duplicates {
+    input:
+        set file('file.bam'), file('file.bam.bai') from realigned_reads
+
+    output:
+        set file('file.realigned.marked.bam'), file('file.realigned.marked.bai') into marked_reads
+
+
+    publishDir 'out'
+
+
+    script:
+    """
+    picard MarkDuplicates.jar \
+        INPUT=file.bam \
+        OUTPUT=file.realigned.marked.bam \
+        METRICS_FILE=file.realigned.marked.metrics \
+        VALIDATION_STRINGENCY=LENIENT
+
+    picard BuildBamIndex.jar \
+        INPUT=file.realigned.marked.bam \
+        VALIDATION_STRINGENCY=LENIENT
+    """
+}
