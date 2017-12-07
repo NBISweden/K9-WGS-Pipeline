@@ -6,14 +6,17 @@ process MapReads {
     input:
         set val(key), file(fastqs) from fastqFiles
     output:
-        file("file.bam")
+        set file("file.bam"), file("file.bam.bai") into mapped_reads
+
 
     publishDir "out"
 
+
     script:
-    readGroup = "@RG\\tID:Sample_79162\\tSM:bar"
+    readGroup = "@RG\\tID:Sample_79162\\tSM:bar\\tPL:ILLUMINA"
     """
     bwa mem -t $task.cpus -M -R \'$readGroup\' $reference $fastqs |
         samtools sort --threads $task.cpus -m 4G > file.bam
+    samtools index file.bam
     """
 }
