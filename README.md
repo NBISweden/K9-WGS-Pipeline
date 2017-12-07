@@ -12,8 +12,8 @@ $ nextflow run main.nf
 ## Run on test data
 
 ```bash
-$ tar xjvf test-data/test-data-tiny.tar.bz2 -C test-data
-$ nextflow run main.nf
+$ scripts/setup_testdata.sh
+$ nextflow run main.nf -profile singularity --fastqDir test-data/test-data-tiny
 ```
 
 ## Authors
