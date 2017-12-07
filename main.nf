@@ -20,3 +20,33 @@ process MapReads {
     samtools index file.bam
     """
 }
+
+
+process gatk_realign {
+    input:
+        set file("file.bam"), file("file.bam.bai") from mapped_reads
+
+    output:
+        file('name.intervals')
+        set file('file.realigned.bam'), file('file.realigned.bai') into realigned_reads
+
+
+    publishDir 'out'
+
+
+    script:
+    """
+    java -jar /usr/GenomeAnalysisTK.jar \
+        -I file.bam \
+        -R $reference \
+        -T RealignerTargetCreator \
+        -o name.intervals
+
+    java -jar /usr/GenomeAnalysisTK.jar \
+        -I file.bam \
+        -R $reference \
+        -T IndelRealigner \
+        -targetIntervals name.intervals \
+        -o file.realigned.bam
+    """
+}
