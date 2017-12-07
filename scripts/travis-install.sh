@@ -1,32 +1,13 @@
 #!/bin/bash
-TOOL="all"
-
-while [[ $# -gt 0 ]]
-do
-    key="$1"
-    case $key in
-        -t|--tool)
-            TOOL="$2"
-            shift
-            shift
-            ;;
-        *)
-            shift
-            ;;
-    esac
-done
 
 # Install Nextflow
-if [[ "$TOOL" = nextflow ]] || [[ "$TOOL" = all ]]
-then
-    cd $HOME
-    curl -fsSL get.nextflow.io | bash
-    chmod +x nextflow
-    sudo mv nextflow /usr/local/bin/
-fi
+cd $HOME
+curl -fsSL get.nextflow.io | bash
+chmod +x nextflow
+sudo mv nextflow /usr/local/bin/
 
 # Install Singularity
-if [[ "$TOOL" = singularity ]] || [[ "$TOOL" = all ]]
+if [[ "$PROFILE" = singularity ]]
 then
     cd $HOME
     wget https://github.com/singularityware/singularity/releases/download/$SGT_VER/singularity-$SGT_VER.tar.gz
