@@ -1,6 +1,7 @@
 fastqFiles = Channel.fromFilePairs('test-data/test-data-tiny/*R{1,2}.fq.gz')
 
 reference = file(params.reference)
+known     = file(params.known)
 
 process MapReads {
     input:
@@ -74,5 +75,60 @@ process mark_duplicates {
     picard BuildBamIndex.jar \
         INPUT=file.realigned.marked.bam \
         VALIDATION_STRINGENCY=LENIENT
+    """
+}
+
+
+process quality_recalibration {
+    input:
+        set file('file.bam'), file('file.bam.bai') from marked_reads
+    output:
+        file('file.recal_data.table')
+        file('file.post_recal_data.table')
+        file('file.recalibrated.bam')
+        file('file.recalibration_plots.pdf')
+
+
+    publishDir 'out'
+
+
+    script:
+    """
+    # Step 1 - We need a list of known sites otherwise, GATK will think all the
+    #          real SNPs in our data are errors. Failure to remove real SNPs
+    #          from the recalibration will result in globally lower quality
+    #          scores
+    java -jar /usr/GenomeAnalysisTK.jar \
+        -T BaseRecalibrator \
+        -I file.bam \
+        -R $reference \
+        -knownSites $known \
+        -o file.recal_data.table \
+        -rf BadCigar
+
+    # Step 2
+    java -jar /usr/GenomeAnalysisTK.jar \
+        -T BaseRecalibrator \
+        -I file.bam \
+        -R $reference \
+        -knownSites $known \
+        -BQSR file.recal_data.table \
+        -o file.post_recal_data.table
+
+    # Step 3 - Create before and after plots
+    java -jar /usr/GenomeAnalysisTK.jar \
+        -T AnalyzeCovariates \
+        -R $reference \
+        -before file.recal_data.table \
+        -after file.post_recal_data.table \
+        -plots file.recalibration_plots.pdf
+
+    # Step 4 - Base calibration
+    java -jar /usr/GenomeAnalysisTK.jar \
+        -T PrintReads \
+        -I file.bam \
+        -R $reference \
+        -BQSR file.recal_data.table \
+        -o file.recalibrated.bam
     """
 }
