@@ -1,7 +1,7 @@
 #!/bin/bash
 set -xeuo pipefail
 
-nextflow run main.nf --verbose
+nextflow run main.nf --verbose --fastqDir test-data/test-data-tiny
 
 # Very simple check to make sure that we have some output
 outbytes=$(wc -c out/file.bam | awk '{print $1}')

@@ -1,10 +1,16 @@
-fastqFiles = Channel.fromFilePairs('test-data/test-data-tiny/*R{1,2}.fq.gz')
+
+if (params.help) {
+    exit 0, usageMessage()
+}
+
+checkInputParams()
 
 reference = file(params.reference)
 known     = file(params.known)
 
-
+fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}.fq.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
+
 
 process fastqc {
     input:
@@ -151,5 +157,42 @@ process quality_recalibration {
         -R $reference \
         -BQSR file.recal_data.table \
         -o file.recalibrated.bam
+    """
+}
+
+
+def checkInputParams() {
+    boolean error = false
+
+    if ( ! params.fastqDir ) {
+        log.warn("You need to provide a fastqDir (--fastqDir)")
+        error = true
+    }
+    if ( ! params.reference ) {
+        log.warn("You need to provide a genome reference (--reference)")
+        error = true
+    }
+    if ( ! params.known ) {
+        log.warn("You need to provide a file of known sites (--known)")
+        error = true
+    }
+
+    if (error) {
+        log.warn "See --help for more information"
+        exit 1
+    }
+}
+
+def usageMessage() {
+    log.info """\
+    Usage:
+        nextflow run main.nf --fastqDir <directory>
+    Options:
+        --fastqDir <Dir>
+           Directory containing fastq samples (.fq.gz)
+        --reference <file>
+           Genome reference file (has to be indexed)
+        --known <file>
+           File with known sites for quality calibration.
     """
 }
