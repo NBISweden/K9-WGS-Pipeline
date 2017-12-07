@@ -13,6 +13,7 @@ env:
 install:
   - sudo apt-get install squashfs-tools
   - "./scripts/travis-install.sh --tool $TOOL_INSTALL"
+  - ./scripts/setup_testdata.sh
 
 script:
   - "./scripts/travis-test.sh"
