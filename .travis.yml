@@ -9,7 +9,7 @@ services:
 
 env:
   - NXF_VER=0.25.6 PROFILE=singularity SGT_VER=2.4.1
-  - NXF_VER=0.25.6 PROFILE=docker
+#  - NXF_VER=0.25.6 PROFILE=docker
 
 install:
   - sudo apt-get install squashfs-tools
