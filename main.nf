@@ -3,9 +3,30 @@ fastqFiles = Channel.fromFilePairs('test-data/test-data-tiny/*R{1,2}.fq.gz')
 reference = file(params.reference)
 known     = file(params.known)
 
-process MapReads {
+
+fastqFiles.into { fastq_qc; fastq_bwa }
+
+process fastqc {
     input:
-        set val(key), file(fastqs) from fastqFiles
+        set val(key), file(fastqs) from fastq_qc
+
+    output:
+        file "*_fastqc.{zip,html}" into fastQCreport
+
+
+    publishDir "out"
+
+
+    script:
+    """
+    fastqc -q $fastqs
+    """
+}
+
+
+process bwa {
+    input:
+        set val(key), file(fastqs) from fastq_bwa
     output:
         set file("file.bam"), file("file.bam.bai") into mapped_reads
 
