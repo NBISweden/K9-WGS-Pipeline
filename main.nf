@@ -160,10 +160,11 @@ process quality_recalibration {
     """
 }
 
+recalibrated_bam.tap { recalibrated_bam_flagstats; recalibrated_bam_hsmetrics }
 
 process flagstats {
     input:
-        file('file.bam') from recalibrated_bam
+        file('file.bam') from recalibrated_bam_flagstats
     output:
         file('file.flagstat')
 
@@ -177,6 +178,29 @@ process flagstats {
     """
 }
 
+process hsmetrics {
+    input:
+        file('file.bam') from recalibrated_bam_hsmetrics
+
+    output:
+        file('file.hybridd_selection_metrics')
+
+
+    publishDir 'out'
+
+    when: false
+
+    script:
+    """
+    picard CalculateHsMetrics.jar \
+        R=$reference \
+        BAIT_INTERVALS=$bait \
+        TARGET_INTERVALS=$target \
+        INPUT=file.bam \
+        OUTPUT=file.hybrid_selection_metrics \
+        VALIDATION_STRINGENCY=LENIENT
+    """
+}
 
 def checkInputParams() {
     boolean error = false
