@@ -1,0 +1,9 @@
+bootstrap: docker
+from:broadinstitute/gatk3:3.5-0
+
+%labels
+AUTHOR Johan Viklund
+MAINTAINER johan.viklund@nbis.se
+
+%post
+RUN mkdir /pica /proj /scratch /sw
