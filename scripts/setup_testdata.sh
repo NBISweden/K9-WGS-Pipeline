@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+singularity pull --name bwa.simg shub://NBISweden/K9-WGS-Pipeline:bwa-0.7.12 &
+singularity pull --name picard.simg shub://NBISweden/K9-WGS-Pipeline:picard-1.97 &
+
+wait
+
 for DIR in test-data/*; do
     if [ ! -d "$DIR" ]; then
         continue
@@ -10,12 +15,15 @@ for DIR in test-data/*; do
 
     GENOME_REFERENCE=(reference*.fa)
 
-    singularity exec docker://viklund/k9-bwa bwa index $GENOME_REFERENCE
-    singularity exec docker://viklund/k9-bwa samtools faidx $GENOME_REFERENCE
+    singularity exec ../../bwa.simg bwa index $GENOME_REFERENCE
+    singularity exec ../../bwa.simg samtools faidx $GENOME_REFERENCE
 
-    singularity exec docker://viklund/k9-picard picard CreateSequenceDictionary.jar \
+    singularity exec ../../picard.simg picard CreateSequenceDictionary.jar \
         R=$GENOME_REFERENCE \
         O=${GENOME_REFERENCE/%.fa/.dict}
 
     cd ../..
 done
+
+rm bwa.simg
+rm picard.simg
