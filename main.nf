@@ -112,7 +112,7 @@ process quality_recalibration {
     output:
         file('file.recal_data.table')
         file('file.post_recal_data.table')
-        file('file.recalibrated.bam')
+        file('file.recalibrated.bam') into recalibrated_bam
         file('file.recalibration_plots.pdf')
 
 
@@ -157,6 +157,23 @@ process quality_recalibration {
         -R $reference \
         -BQSR file.recal_data.table \
         -o file.recalibrated.bam
+    """
+}
+
+
+process flagstats {
+    input:
+        file('file.bam') from recalibrated_bam
+    output:
+        file('file.flagstat')
+
+
+    publishDir 'out'
+
+
+    script:
+    """
+    samtools flagstat file.bam > file.flagstat
     """
 }
 
