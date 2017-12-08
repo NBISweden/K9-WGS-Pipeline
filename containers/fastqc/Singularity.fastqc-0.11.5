@@ -17,7 +17,7 @@ rm -rf /var/lib/apt/lists/*
 
 # Install FastQC
 export FASTQC_VERSION=0.11.5
-wget --quiet -O fastqc_v${FASTQC_VERSION}.zip http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v${FASTQC_VERSION}.zip \
+wget --quiet -O fastqc_v${FASTQC_VERSION}.zip http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v${FASTQC_VERSION}.zip
 unzip fastqc_v${FASTQC_VERSION}.zip -d /opt/
 chmod 755 /opt/FastQC/fastqc
 ln -s /opt/FastQC/fastqc /usr/local/bin/fastqc
