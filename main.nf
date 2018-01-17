@@ -182,10 +182,7 @@ process haplotypeCaller {
     input:
         set file('file.bam'), file('file.bai') from recalibrated_bam_haplotype
     output:
-        file('file.g.vcf')
-
-
-    publishDir 'out'
+        file('file.g.vcf') into haplotype_caller
 
     script:
     """
@@ -198,6 +195,21 @@ process haplotypeCaller {
         --variant_index_parameter 128000 \
         -o file.g.vcf \
         -rf BadCigar
+    """
+}
+
+process haplotypeCallerCompress {
+    input:
+        file('file.g.vcf') from haplotype_caller
+    output:
+        set file('file.g.vcf.gz'), file('file.g.vcf.gz.tbi')
+
+    publishDir 'out'
+
+    script:
+    """
+    bgzip file.g.vcf
+    tabix file.g.vcf.gz
     """
 }
 
