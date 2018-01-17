@@ -112,7 +112,7 @@ process quality_recalibration {
     output:
         file('file.recal_data.table')
         file('file.post_recal_data.table')
-        file('file.recalibrated.bam') into recalibrated_bam
+        set file('file.recalibrated.bam'), file('file.recalibrated.bai') into recalibrated_bam
         file('file.recalibration_plots.pdf')
 
 
@@ -160,11 +160,11 @@ process quality_recalibration {
     """
 }
 
-recalibrated_bam.tap { recalibrated_bam_flagstats; recalibrated_bam_hsmetrics }
+recalibrated_bam.tap { recalibrated_bam_flagstats; recalibrated_bam_hsmetrics; recalibrated_bam_haplotype }
 
 process flagstats {
     input:
-        file('file.bam') from recalibrated_bam_flagstats
+        set file('file.bam'), file('file.bai') from recalibrated_bam_flagstats
     output:
         file('file.flagstat')
 
@@ -178,9 +178,32 @@ process flagstats {
     """
 }
 
+process haplotypeCaller {
+    input:
+        set file('file.bam'), file('file.bai') from recalibrated_bam_haplotype
+    output:
+        file('file.g.vcf')
+
+
+    publishDir 'out'
+
+    script:
+    """
+        java -jar /usr/GenomeAnalysisTK.jar \
+            -T HaplotypeCaller\
+            -R $reference \
+            -I file.bam \
+            --emitRefConfidence GVCF \
+            --variant_index_type LINEAR \
+            --variant_index_parameter 128000 \
+            -o file.g.vcf \
+            -rf BadCigar
+    """
+}
+
 process hsmetrics {
     input:
-        file('file.bam') from recalibrated_bam_hsmetrics
+        set file('file.bam'), file('file.bai') from recalibrated_bam_hsmetrics
 
     output:
         file('file.hybridd_selection_metrics')
