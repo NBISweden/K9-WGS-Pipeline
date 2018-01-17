@@ -42,5 +42,7 @@ Vagrant.configure("2") do |config|
         stable"
     apt-get update
     apt-get -y install docker-ce
+
+    usermod -a -G docker ubuntu
   SHELL
 end
