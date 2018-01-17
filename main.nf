@@ -189,17 +189,18 @@ process haplotypeCaller {
 
     script:
     """
-        java -jar /usr/GenomeAnalysisTK.jar \
-            -T HaplotypeCaller\
-            -R $reference \
-            -I file.bam \
-            --emitRefConfidence GVCF \
-            --variant_index_type LINEAR \
-            --variant_index_parameter 128000 \
-            -o file.g.vcf \
-            -rf BadCigar
+    java -jar /usr/GenomeAnalysisTK.jar \
+        -T HaplotypeCaller\
+        -R $reference \
+        -I file.bam \
+        --emitRefConfidence GVCF \
+        --variant_index_type LINEAR \
+        --variant_index_parameter 128000 \
+        -o file.g.vcf \
+        -rf BadCigar
     """
 }
+
 
 process hsmetrics {
     input:
