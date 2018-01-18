@@ -19,7 +19,6 @@ process fastqc {
     output:
         file "*_fastqc.{zip,html}" into fastQCreport
 
-
     publishDir "out"
 
 
@@ -35,7 +34,6 @@ process bwa {
         set val(key), file(fastqs) from fastq_bwa
     output:
         set file("file.bam"), file("file.bam.bai") into mapped_reads
-
 
     publishDir "out"
 
@@ -53,11 +51,9 @@ process bwa {
 process gatk_realign {
     input:
         set file("file.bam"), file("file.bam.bai") from mapped_reads
-
     output:
         file('name.intervals')
         set file('file.realigned.bam'), file('file.realigned.bai') into realigned_reads
-
 
     publishDir 'out'
 
@@ -83,10 +79,8 @@ process gatk_realign {
 process mark_duplicates {
     input:
         set file('file.bam'), file('file.bam.bai') from realigned_reads
-
     output:
         set file('file.realigned.marked.bam'), file('file.realigned.marked.bai') into marked_reads
-
 
     publishDir 'out'
 
@@ -114,7 +108,6 @@ process quality_recalibration {
         file('file.post_recal_data.table')
         set file('file.recalibrated.bam'), file('file.recalibrated.bai') into recalibrated_bam
         file('file.recalibration_plots.pdf')
-
 
     publishDir 'out'
 
@@ -160,14 +153,15 @@ process quality_recalibration {
     """
 }
 
+
 recalibrated_bam.tap { recalibrated_bam_flagstats; recalibrated_bam_hsmetrics; recalibrated_bam_haplotype }
+
 
 process flagstats {
     input:
         set file('file.bam'), file('file.bai') from recalibrated_bam_flagstats
     output:
         file('file.flagstat')
-
 
     publishDir 'out'
 
@@ -178,11 +172,13 @@ process flagstats {
     """
 }
 
+
 process haplotypeCaller {
     input:
         set file('file.bam'), file('file.bai') from recalibrated_bam_haplotype
     output:
         file('file.g.vcf') into haplotype_caller
+
 
     script:
     """
@@ -198,6 +194,7 @@ process haplotypeCaller {
     """
 }
 
+
 process haplotypeCallerCompress {
     input:
         file('file.g.vcf') from haplotype_caller
@@ -205,6 +202,7 @@ process haplotypeCallerCompress {
         set file('file.g.vcf.gz'), file('file.g.vcf.gz.tbi')
 
     publishDir 'out'
+
 
     script:
     """
@@ -221,7 +219,6 @@ process hsmetrics {
     output:
         file('file.hybridd_selection_metrics')
 
-
     publishDir 'out'
 
     when: false
@@ -237,6 +234,12 @@ process hsmetrics {
         VALIDATION_STRINGENCY=LENIENT
     """
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+// FUNCTIONS                                                                  //
+////////////////////////////////////////////////////////////////////////////////
+
 
 def checkInputParams() {
     boolean error = false
