@@ -240,6 +240,26 @@ process hsmetrics {
 }
 
 
+/*
+process genotype {
+    input:
+        set file('file.vcf.gz'), file('file.vcf.gz.tbi') from input
+    output:
+        file 'genotyped.vcf.gz'
+
+
+    script:
+    """
+    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
+        -T GenotypeGVCFs \
+        -R $reference \
+        -V samples.list \
+        -o all_samples_genotyping.vcf.gz
+    """
+}
+*/
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // FUNCTIONS                                                                  //
 ////////////////////////////////////////////////////////////////////////////////
