@@ -7,9 +7,13 @@ checkInputParams()
 
 reference = file(params.reference)
 known     = file(params.known)
+outdir    = params.out
 
 fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}.fq.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
+
+
+infoMessage()
 
 
 process fastqc {
@@ -274,5 +278,15 @@ def usageMessage() {
            Genome reference file (has to be indexed)
         --known <file>
            File with known sites for quality calibration.
+        --out <dir>
+           Directory for output files
+    """
+}
+
+def infoMessage() {
+    log.info """\
+*** K9 WGS Pipeline ***
+Configuration environemnt:
+    Out directory: $params.out
     """
 }
