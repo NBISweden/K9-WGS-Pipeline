@@ -246,22 +246,22 @@ process hsmetrics {
 
 
 def checkInputParams() {
-    boolean error = false
-
+    // Check required parameters and display error messages
+    boolean fatal_error = false
     if ( ! params.fastqDir ) {
         log.warn("You need to provide a fastqDir (--fastqDir)")
-        error = true
+        fatal_error = true
     }
     if ( ! params.reference ) {
         log.warn("You need to provide a genome reference (--reference)")
-        error = true
+        fatal_error = true
     }
     if ( ! params.known ) {
         log.warn("You need to provide a file of known sites (--known)")
-        error = true
+        fatal_error = true
     }
 
-    if (error) {
+    if (fatal_error) {
         log.warn "See --help for more information"
         exit 1
     }
