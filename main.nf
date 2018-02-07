@@ -9,7 +9,7 @@ reference = file(params.reference)
 refdir = file(reference.getParent())
 known     = file(params.known)
 outdir    = params.out
-chromosomes = refdir.name.contains('test-data-tiny') ? ['chr38'] : (1..38).collect {"chr${it}"} + 'chrX'
+chromosomes = refdir.name.contains('test-data-tiny') ? ['chr38'] : (1..38).collect {"chr${it}"} + ['chrX', 'chrY', 'chrM']
 
 fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}.fq.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
