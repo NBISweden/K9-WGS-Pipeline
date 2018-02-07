@@ -6,6 +6,7 @@ if (params.help) {
 checkInputParams()
 
 reference = file(params.reference)
+refdir = file(reference.getParent())
 known     = file(params.known)
 outdir    = params.out
 
@@ -36,6 +37,7 @@ process fastqc {
 process bwa {
     input:
         set val(key), file(fastqs) from fastq_bwa
+        file refdir 
     output:
         set file("file.bam"), file("file.bam.bai") into mapped_reads
 
@@ -45,7 +47,8 @@ process bwa {
     script:
     readGroup = "@RG\\tID:Sample_79162\\tSM:bar\\tPL:ILLUMINA"
     """
-    bwa mem -t $task.cpus -M -R \'$readGroup\' $reference $fastqs |
+    [[ -e $refdir/${reference.baseName}.fa.bwt ]] || bwa index $refdir/${reference.getName()}
+    bwa mem -t $task.cpus -M -R \'$readGroup\' $refdir/${reference.getName()} $fastqs |
         samtools sort --threads $task.cpus -m 4G > file.bam
     samtools index file.bam
     """
@@ -55,6 +58,7 @@ process bwa {
 process gatk_realign {
     input:
         set file("file.bam"), file("file.bam.bai") from mapped_reads
+        file refdir 
     output:
         file('name.intervals')
         set file('file.realigned.bam'), file('file.realigned.bai') into realigned_reads
@@ -66,13 +70,13 @@ process gatk_realign {
     """
     java -jar /usr/GenomeAnalysisTK.jar \
         -I file.bam \
-        -R $reference \
+        -R $refdir/${reference.getName()} \
         -T RealignerTargetCreator \
         -o name.intervals
 
     java -jar /usr/GenomeAnalysisTK.jar \
         -I file.bam \
-        -R $reference \
+        -R $refdir/${reference.getName()} \
         -T IndelRealigner \
         -targetIntervals name.intervals \
         -o file.realigned.bam
@@ -107,6 +111,7 @@ process mark_duplicates {
 process quality_recalibration {
     input:
         set file('file.bam'), file('file.bam.bai') from marked_reads
+        file known
     output:
         file('file.recal_data.table')
         file('file.post_recal_data.table')
@@ -180,6 +185,7 @@ process flagstats {
 process haplotypeCaller {
     input:
         set file('file.bam'), file('file.bai') from recalibrated_bam_haplotype
+        file refdir 
     output:
         file('file.g.vcf') into haplotype_caller
 
@@ -188,7 +194,7 @@ process haplotypeCaller {
     """
     java -jar /usr/GenomeAnalysisTK.jar \
         -T HaplotypeCaller\
-        -R $reference \
+        -R $refdir/${reference.getName()} \
         -I file.bam \
         --emitRefConfidence GVCF \
         --variant_index_type LINEAR \
@@ -219,6 +225,7 @@ process haplotypeCallerCompress {
 process hsmetrics {
     input:
         set file('file.bam'), file('file.bai') from recalibrated_bam_hsmetrics
+        file reference
 
     output:
         file('file.hybridd_selection_metrics')
@@ -244,6 +251,7 @@ process hsmetrics {
 process genotype {
     input:
         set file('file.vcf.gz'), file('file.vcf.gz.tbi') from input
+        file reference
     output:
         file 'genotyped.vcf.gz'
 
