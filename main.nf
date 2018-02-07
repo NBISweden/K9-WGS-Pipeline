@@ -9,6 +9,7 @@ reference = file(params.reference)
 refdir = file(reference.getParent())
 known     = file(params.known)
 outdir    = params.out
+chromosomes = refdir.name.contains('test-data-tiny') ? ['chr38'] : (1..38).collect {"chr${it}"} + 'chrX'
 
 fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}.fq.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
@@ -209,7 +210,8 @@ process haplotypeCallerCompress {
     input:
         file('file.g.vcf') from haplotype_caller
     output:
-        set file('file.g.vcf.gz'), file('file.g.vcf.gz.tbi')
+        file('file.g.vcf.gz') into compress_haplocalled
+        file('file.g.vcf.gz.tbi') into compress_haplocall_ix
 
     publishDir 'out'
 
@@ -246,7 +248,57 @@ process hsmetrics {
     """
 }
 
+/* COMBINE GVCF
+This needs to collect 150/200 samples from samples.list
+Unsure how to get those
+Script also runs one per chromosome it seems, could use each
+*/
 
+compress_haplocalled
+  .collect()
+  .set { collect_haplovcfs }
+
+compress_haplocall_ix
+  .collect()
+  .set { collect_haplovcfsix }
+
+process gVCFCombine {
+
+    input:
+    file refdir 
+    file vcfs from collect_haplovcfs
+    file indexed_vcfs from collect_haplovcfsix
+    each chrom from chromosomes
+     
+    output:
+    file "${chrom}-group1.vcf" into combined
+
+    script:
+    """
+    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
+        -T CombineGVCFs \
+        -V ${vcfs.join(' -V ')} \
+        -R $refdir/${reference.getName()} \
+        -o ${chrom}-group1.vcf -L $chrom
+    """
+}
+
+
+process bgZipCombinedGVCF {
+
+    input:
+    file combined_gvcf from combined
+
+    output:
+    file "${combined_gvcf}.gz" into compressed_comb_gvcf
+
+    """
+    bgzip $combined_gvcf
+    """
+}
+
+compressed_comb_gvcf
+  .subscribe { println it }
 /*
 process genotype {
     input:
