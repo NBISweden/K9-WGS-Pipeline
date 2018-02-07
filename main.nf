@@ -271,7 +271,7 @@ process gVCFCombine {
     each chrom from chromosomes
      
     output:
-    file "${chrom}-group1.vcf" into combined
+    file "${chrom}.vcf" into combined
 
     script:
     """
@@ -279,7 +279,7 @@ process gVCFCombine {
         -T CombineGVCFs \
         -V ${vcfs.join(' -V ')} \
         -R $refdir/${reference.getName()} \
-        -o ${chrom}-group1.vcf -L $chrom
+        -o ${chrom}.vcf -L $chrom
     """
 }
 
@@ -298,7 +298,28 @@ process bgZipCombinedGVCF {
 }
 
 compressed_comb_gvcf
-  .subscribe { println it }
+  .collect()
+  .set { combgvcfs }
+
+
+process afterChrList {
+    input:
+    file reference
+    file chromosomes from combgvcfs
+
+    output:
+    file 'chromosomes.vcf.gz' in to combined_chromosomes
+
+    script:
+    """
+    java -Xmx23g -cp /usr/GenomeAnalysisTK.jar org.broadinstitute.gatk.tools.CatVariants \
+        -R $reference \
+        -V ${chromosomes.join(' -V ')} \
+        -out chromosomes.vcf.gz -assumeSorted
+    """
+}
+
+
 /*
 process genotype {
     input:
