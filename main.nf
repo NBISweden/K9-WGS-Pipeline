@@ -308,7 +308,7 @@ process afterChrList {
     file chromosomes from combgvcfs
 
     output:
-    file 'chromosomes.vcf.gz' in to combined_chromosomes
+    file 'chromosomes.vcf.gz' into combined_chromosomes
 
     script:
     """
