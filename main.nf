@@ -210,8 +210,7 @@ process haplotypeCallerCompress {
     input:
         file('file.g.vcf') from haplotype_caller
     output:
-        file('file.g.vcf.gz') into compress_haplocalled
-        file('file.g.vcf.gz.tbi') into compress_haplocall_ix
+        set file('file.g.vcf.gz'), file('file.g.vcf.gz.tbi') into compress_haplocalled
 
     publishDir 'out'
 
@@ -258,16 +257,12 @@ compress_haplocalled
   .collect()
   .set { collect_haplovcfs }
 
-compress_haplocall_ix
-  .collect()
-  .set { collect_haplovcfsix }
 
 process gVCFCombine {
 
     input:
     file refdir 
-    file vcfs from collect_haplovcfs
-    file indexed_vcfs from collect_haplovcfsix
+    set file(vcfs), file(indexed_vcfs) from collect_haplovcfs
     each chrom from chromosomes
      
     output:
