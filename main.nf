@@ -7,6 +7,9 @@ checkInputParams()
 
 reference = file(params.reference)
 refdir = file(reference.getParent())
+referenceBwaIndex = file("${reference}.{amb,ann,bwt,pac,sa}")
+referenceFaIndex = file("${reference}.fai")
+referenceDict = file("${refdir}/${reference.getBaseName()}.dict")
 known     = file(params.known)
 outdir    = params.out
 chromosomes = refdir.name.contains('test-data-tiny') ? ['chr38'] : (1..38).collect {"chr${it}"} + ['chrX', 'chrY', 'chrM']
@@ -38,7 +41,7 @@ process fastqc {
 process bwa {
     input:
         set val(key), file(fastqs) from fastq_bwa
-        file refdir 
+        set file(reference), file(bwaindex) from Channel.value([reference, referenceBwaIndex])
     output:
         set file("file.bam"), file("file.bam.bai") into mapped_reads
 
@@ -48,7 +51,7 @@ process bwa {
     script:
     readGroup = "@RG\\tID:Sample_79162\\tSM:bar\\tPL:ILLUMINA"
     """
-    bwa mem -t $task.cpus -M -R \'$readGroup\' $refdir/${reference.getName()} $fastqs |
+    bwa mem -t $task.cpus -M -R \'$readGroup\' $reference $fastqs |
         samtools sort --threads $task.cpus -m 4G > file.bam
     samtools index file.bam
     """
@@ -58,7 +61,7 @@ process bwa {
 process gatk_realign {
     input:
         set file("file.bam"), file("file.bam.bai") from mapped_reads
-        file refdir 
+        set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
         file('name.intervals')
         set file('file.realigned.bam'), file('file.realigned.bai') into realigned_reads
@@ -68,15 +71,16 @@ process gatk_realign {
 
     script:
     """
+    ls
     java -jar /usr/GenomeAnalysisTK.jar \
         -I file.bam \
-        -R $refdir/${reference.getName()} \
+        -R $reference \
         -T RealignerTargetCreator \
         -o name.intervals
 
     java -jar /usr/GenomeAnalysisTK.jar \
         -I file.bam \
-        -R $refdir/${reference.getName()} \
+        -R $reference \
         -T IndelRealigner \
         -targetIntervals name.intervals \
         -o file.realigned.bam
@@ -185,7 +189,7 @@ process flagstats {
 process haplotypeCaller {
     input:
         set file('file.bam'), file('file.bai') from recalibrated_bam_haplotype
-        file refdir 
+        set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
         file('file.g.vcf') into haplotype_caller
 
@@ -194,7 +198,7 @@ process haplotypeCaller {
     """
     java -jar /usr/GenomeAnalysisTK.jar \
         -T HaplotypeCaller\
-        -R $refdir/${reference.getName()} \
+        -R $reference \
         -I file.bam \
         --emitRefConfidence GVCF \
         --variant_index_type LINEAR \
@@ -260,7 +264,7 @@ compress_haplocalled
 process gVCFCombine {
 
     input:
-    file refdir 
+    set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     set file(vcfs), file(indexed_vcfs) from collect_haplovcfs
     each chrom from chromosomes
      
@@ -272,7 +276,7 @@ process gVCFCombine {
     java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
         -T CombineGVCFs \
         -V ${vcfs.join(' -V ')} \
-        -R $refdir/${reference.getName()} \
+        -R $reference \
         -o ${chrom}.vcf -L $chrom
     """
 }
