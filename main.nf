@@ -12,7 +12,16 @@ referenceFaIndex = file("${reference}.fai")
 referenceDict = file("${refdir}/${reference.getBaseName()}.dict")
 known     = file(params.known)
 outdir    = params.out
-chromosomes = refdir.name.contains('test-data-tiny') ? ['chr38'] : (1..38).collect {"chr${it}"} + ['chrX', 'chrY', 'chrM']
+
+if ( refdir.name.contains('test-data-tiny') ) {
+    chromosomes = ['chr38'] 
+    }
+else if ( refdir.name.contains('test-data-small') ) {
+    chromosomes = (36..38).collect {"chr${it}_1000000_1030000"} + ['chrX_1000000_1030000']
+    }
+else {
+    chromosomes = (1..38).collect {"chr${it}"} + ['chrX', 'chrY', 'chrM']
+    }
 
 fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}.fq.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
