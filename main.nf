@@ -6,8 +6,10 @@ if (params.help) {
 checkInputParams()
 
 reference = file(params.reference)
+refdir = file(reference.getParent())
 known     = file(params.known)
 outdir    = params.out
+chromosomes = refdir.name.contains('test-data-tiny') ? ['chr38'] : (1..38).collect {"chr${it}"} + ['chrX', 'chrY', 'chrM']
 
 fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}.fq.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
@@ -36,6 +38,7 @@ process fastqc {
 process bwa {
     input:
         set val(key), file(fastqs) from fastq_bwa
+        file refdir 
     output:
         set file("file.bam"), file("file.bam.bai") into mapped_reads
 
@@ -45,7 +48,7 @@ process bwa {
     script:
     readGroup = "@RG\\tID:Sample_79162\\tSM:bar\\tPL:ILLUMINA"
     """
-    bwa mem -t $task.cpus -M -R \'$readGroup\' $reference $fastqs |
+    bwa mem -t $task.cpus -M -R \'$readGroup\' $refdir/${reference.getName()} $fastqs |
         samtools sort --threads $task.cpus -m 4G > file.bam
     samtools index file.bam
     """
@@ -55,6 +58,7 @@ process bwa {
 process gatk_realign {
     input:
         set file("file.bam"), file("file.bam.bai") from mapped_reads
+        file refdir 
     output:
         file('name.intervals')
         set file('file.realigned.bam'), file('file.realigned.bai') into realigned_reads
@@ -66,13 +70,13 @@ process gatk_realign {
     """
     java -jar /usr/GenomeAnalysisTK.jar \
         -I file.bam \
-        -R $reference \
+        -R $refdir/${reference.getName()} \
         -T RealignerTargetCreator \
         -o name.intervals
 
     java -jar /usr/GenomeAnalysisTK.jar \
         -I file.bam \
-        -R $reference \
+        -R $refdir/${reference.getName()} \
         -T IndelRealigner \
         -targetIntervals name.intervals \
         -o file.realigned.bam
@@ -107,6 +111,7 @@ process mark_duplicates {
 process quality_recalibration {
     input:
         set file('file.bam'), file('file.bam.bai') from marked_reads
+        file known
     output:
         file('file.recal_data.table')
         file('file.post_recal_data.table')
@@ -180,6 +185,7 @@ process flagstats {
 process haplotypeCaller {
     input:
         set file('file.bam'), file('file.bai') from recalibrated_bam_haplotype
+        file refdir 
     output:
         file('file.g.vcf') into haplotype_caller
 
@@ -188,7 +194,7 @@ process haplotypeCaller {
     """
     java -jar /usr/GenomeAnalysisTK.jar \
         -T HaplotypeCaller\
-        -R $reference \
+        -R $refdir/${reference.getName()} \
         -I file.bam \
         --emitRefConfidence GVCF \
         --variant_index_type LINEAR \
@@ -203,7 +209,7 @@ process haplotypeCallerCompress {
     input:
         file('file.g.vcf') from haplotype_caller
     output:
-        set file('file.g.vcf.gz'), file('file.g.vcf.gz.tbi')
+        set file('file.g.vcf.gz'), file('file.g.vcf.gz.tbi') into compress_haplocalled
 
     publishDir 'out'
 
@@ -219,6 +225,7 @@ process haplotypeCallerCompress {
 process hsmetrics {
     input:
         set file('file.bam'), file('file.bai') from recalibrated_bam_hsmetrics
+        file reference
 
     output:
         file('file.hybridd_selection_metrics')
@@ -239,11 +246,79 @@ process hsmetrics {
     """
 }
 
+/* COMBINE GVCF
+This needs to collect 150/200 samples from samples.list
+Unsure how to get those
+Script also runs one per chromosome it seems, could use each
+*/
+
+compress_haplocalled
+  .collect()
+  .set { collect_haplovcfs }
+
+
+process gVCFCombine {
+
+    input:
+    file refdir 
+    set file(vcfs), file(indexed_vcfs) from collect_haplovcfs
+    each chrom from chromosomes
+     
+    output:
+    file "${chrom}.vcf" into combined
+
+    script:
+    """
+    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
+        -T CombineGVCFs \
+        -V ${vcfs.join(' -V ')} \
+        -R $refdir/${reference.getName()} \
+        -o ${chrom}.vcf -L $chrom
+    """
+}
+
+
+process bgZipCombinedGVCF {
+
+    input:
+    file combined_gvcf from combined
+
+    output:
+    file "${combined_gvcf}.gz" into compressed_comb_gvcf
+
+    """
+    bgzip $combined_gvcf
+    """
+}
+
+compressed_comb_gvcf
+  .collect()
+  .set { combgvcfs }
+
+
+process afterChrList {
+    input:
+    file reference
+    file chromosomes from combgvcfs
+
+    output:
+    file 'chromosomes.vcf.gz' into combined_chromosomes
+
+    script:
+    """
+    java -Xmx23g -cp /usr/GenomeAnalysisTK.jar org.broadinstitute.gatk.tools.CatVariants \
+        -R $reference \
+        -V ${chromosomes.join(' -V ')} \
+        -out chromosomes.vcf.gz -assumeSorted
+    """
+}
+
 
 /*
 process genotype {
     input:
         set file('file.vcf.gz'), file('file.vcf.gz.tbi') from input
+        file reference
     output:
         file 'genotyped.vcf.gz'
 
