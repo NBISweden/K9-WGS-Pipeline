@@ -20,7 +20,7 @@ for DIR in test-data/*; do
 
     singularity exec ../../picard.simg picard CreateSequenceDictionary.jar \
         R=$GENOME_REFERENCE \
-        O=${GENOME_REFERENCE/%.fa/.dict}
+        O=${GENOME_REFERENCE/%.fa/.dict} || echo "Picard fail"
 
     cd ../..
 done
