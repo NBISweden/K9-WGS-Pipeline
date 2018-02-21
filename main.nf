@@ -48,7 +48,6 @@ process bwa {
     script:
     readGroup = "@RG\\tID:Sample_79162\\tSM:bar\\tPL:ILLUMINA"
     """
-    [[ -e $refdir/${reference.baseName}.fa.bwt ]] || bwa index $refdir/${reference.getName()}
     bwa mem -t $task.cpus -M -R \'$readGroup\' $refdir/${reference.getName()} $fastqs |
         samtools sort --threads $task.cpus -m 4G > file.bam
     samtools index file.bam
