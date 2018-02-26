@@ -52,17 +52,19 @@ process bwa {
         set val(key), file(fastqs) from fastq_bwa
         set file(reference), file(bwaindex) from Channel.value([reference, referenceBwaIndex])
     output:
-        set val(key), file("file.bam"), file("file.bam.bai") into mapped_reads
+        set val(key), file("${key}.bam"), file("${key}.bam.bai") into mapped_reads
 
     publishDir "out"
+
+    tag "$key"
 
 
     script:
     readGroup = "@RG\\tID:Sample_79162\\tSM:bar\\tPL:ILLUMINA"
     """
     bwa mem -t $task.cpus -M -R \'$readGroup\' $reference $fastqs |
-        samtools sort --threads $task.cpus -m 4G > file.bam
-    samtools index file.bam
+        samtools sort --threads $task.cpus -m 4G > ${key}.bam
+    samtools index ${key}.bam
     """
 }
 
