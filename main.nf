@@ -52,7 +52,7 @@ process bwa {
         set val(key), file(fastqs) from fastq_bwa
         set file(reference), file(bwaindex) from Channel.value([reference, referenceBwaIndex])
     output:
-        set file("file.bam"), file("file.bam.bai") into mapped_reads
+        set val(key), file("file.bam"), file("file.bam.bai") into mapped_reads
 
     publishDir "out"
 
@@ -69,11 +69,11 @@ process bwa {
 
 process gatk_realign {
     input:
-        set file("file.bam"), file("file.bam.bai") from mapped_reads
+        set val(key), file("file.bam"), file("file.bam.bai") from mapped_reads
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
         file('name.intervals')
-        set file('file.realigned.bam'), file('file.realigned.bai') into realigned_reads
+        set val(key), file('file.realigned.bam'), file('file.realigned.bai') into realigned_reads
 
     publishDir 'out'
 
@@ -99,9 +99,9 @@ process gatk_realign {
 
 process mark_duplicates {
     input:
-        set file('file.bam'), file('file.bam.bai') from realigned_reads
+        set val(key), file('file.bam'), file('file.bam.bai') from realigned_reads
     output:
-        set file('file.realigned.marked.bam'), file('file.realigned.marked.bai') into marked_reads
+        set val(key), file('file.realigned.marked.bam'), file('file.realigned.marked.bai') into marked_reads
 
     publishDir 'out'
 
@@ -123,12 +123,12 @@ process mark_duplicates {
 
 process quality_recalibration {
     input:
-        set file('file.bam'), file('file.bam.bai') from marked_reads
+        set val(key), file('file.bam'), file('file.bam.bai') from marked_reads
         file known
     output:
         file('file.recal_data.table')
         file('file.post_recal_data.table')
-        set file('file.recalibrated.bam'), file('file.recalibrated.bai') into recalibrated_bam
+        set val(key), file('file.recalibrated.bam'), file('file.recalibrated.bai') into recalibrated_bam
         file('file.recalibration_plots.pdf')
 
     publishDir 'out'
@@ -181,7 +181,7 @@ recalibrated_bam.tap { recalibrated_bam_flagstats; recalibrated_bam_hsmetrics; r
 
 process flagstats {
     input:
-        set file('file.bam'), file('file.bai') from recalibrated_bam_flagstats
+        set val(key), file('file.bam'), file('file.bai') from recalibrated_bam_flagstats
     output:
         file('file.flagstat')
 
@@ -197,10 +197,10 @@ process flagstats {
 
 process haplotypeCaller {
     input:
-        set file('file.bam'), file('file.bai') from recalibrated_bam_haplotype
+        set val(key), file('file.bam'), file('file.bai') from recalibrated_bam_haplotype
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
-        file('file.g.vcf') into haplotype_caller
+        set val(key), file('file.g.vcf') into haplotype_caller
 
 
     script:
@@ -220,9 +220,9 @@ process haplotypeCaller {
 
 process haplotypeCallerCompress {
     input:
-        file('file.g.vcf') from haplotype_caller
+        set val(key), file('file.g.vcf') from haplotype_caller
     output:
-        set file('file.g.vcf.gz'), file('file.g.vcf.gz.tbi') into compress_haplocalled
+        set val(key), file('file.g.vcf.gz'), file('file.g.vcf.gz.tbi') into compress_haplocalled
 
     publishDir 'out'
 
@@ -237,7 +237,7 @@ process haplotypeCallerCompress {
 
 process hsmetrics {
     input:
-        set file('file.bam'), file('file.bai') from recalibrated_bam_hsmetrics
+        set val(key), file('file.bam'), file('file.bai') from recalibrated_bam_hsmetrics
         file reference
 
     output:
@@ -266,7 +266,8 @@ Script also runs one per chromosome it seems, could use each
 */
 
 compress_haplocalled
-  .collect()
+  .reduce([keys:[], vcfs:[], ixvcfs:[]]) { a, b -> a.keys.add(b[0]); a.vcfs.add(b[1]); a.ixvcfs.add(b[2]); return a }
+  .map { it -> [it.keys, it.vcfs, it.ixvcfs] }
   .set { collect_haplovcfs }
 
 
@@ -274,7 +275,7 @@ process gVCFCombine {
 
     input:
     set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
-    set file(vcfs), file(indexed_vcfs) from collect_haplovcfs
+    set val(keys), file('vcf?'), file('ix_vcf?') from collect_haplovcfs
     each chrom from chromosomes
      
     output:
@@ -282,9 +283,10 @@ process gVCFCombine {
 
     script:
     """
+    count=1; for k in ${keys.join(' ')}; do ln -s `pwd`/vcf\$count \$k.vcf.gz; ln -s `pwd`/ix_vcf\$count \$k.vcf.gz.tbi; ((count++)); done
     java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
         -T CombineGVCFs \
-        -V ${vcfs.join(' -V ')} \
+        -V ${keys.collect { el -> return el+'.vcf.gz' }.join(' -V ')} \
         -R $reference \
         -o ${chrom}.vcf -L $chrom
     """
