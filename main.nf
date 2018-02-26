@@ -71,11 +71,11 @@ process bwa {
 
 process gatk_realign {
     input:
-        set val(key), file("file.bam"), file("file.bam.bai") from mapped_reads
+        set val(key), file(bamfile), file(bamix) from mapped_reads
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
         file('name.intervals')
-        set val(key), file('file.realigned.bam'), file('file.realigned.bai') into realigned_reads
+        set val(key), file("${key}.realigned.bam"), file("${key}.realigned.bai") into realigned_reads
 
     publishDir 'out'
 
@@ -84,26 +84,27 @@ process gatk_realign {
     """
     ls
     java -jar /usr/GenomeAnalysisTK.jar \
-        -I file.bam \
+        -I $bamfile \
         -R $reference \
         -T RealignerTargetCreator \
         -o name.intervals
 
     java -jar /usr/GenomeAnalysisTK.jar \
-        -I file.bam \
+        -I $bamfile \
         -R $reference \
         -T IndelRealigner \
         -targetIntervals name.intervals \
-        -o file.realigned.bam
+        -o ${key}.realigned.bam
+
     """
 }
 
 
 process mark_duplicates {
     input:
-        set val(key), file('file.bam'), file('file.bam.bai') from realigned_reads
+        set val(key), file(bamfile), file(bamix) from realigned_reads
     output:
-        set val(key), file('file.realigned.marked.bam'), file('file.realigned.marked.bai') into marked_reads
+        set val(key), file("${key}.realigned.marked.bam"), file("${key}.realigned.marked.bai") into marked_reads
 
     publishDir 'out'
 
@@ -111,13 +112,13 @@ process mark_duplicates {
     script:
     """
     picard MarkDuplicates.jar \
-        INPUT=file.bam \
-        OUTPUT=file.realigned.marked.bam \
-        METRICS_FILE=file.realigned.marked.metrics \
+        INPUT=$bamfile \
+        OUTPUT=${key}.realigned.marked.bam \
+        METRICS_FILE=${key}.realigned.marked.metrics \
         VALIDATION_STRINGENCY=LENIENT
 
     picard BuildBamIndex.jar \
-        INPUT=file.realigned.marked.bam \
+        INPUT=${key}.realigned.marked.bam \
         VALIDATION_STRINGENCY=LENIENT
     """
 }
@@ -125,13 +126,13 @@ process mark_duplicates {
 
 process quality_recalibration {
     input:
-        set val(key), file('file.bam'), file('file.bam.bai') from marked_reads
+        set val(key), file(bamfile), file(bamix) from marked_reads
         file known
     output:
-        file('file.recal_data.table')
-        file('file.post_recal_data.table')
-        set val(key), file('file.recalibrated.bam'), file('file.recalibrated.bai') into recalibrated_bam
-        file('file.recalibration_plots.pdf')
+        file("${key}.recal_data.table")
+        file("${key}.post_recal_data.table")
+        set val(key), file("${key}.recalibrated.bam"), file("${key}.recalibrated.bai") into recalibrated_bam
+        file("${key}.recalibration_plots.pdf")
 
     publishDir 'out'
 
@@ -144,36 +145,36 @@ process quality_recalibration {
     #          scores
     java -jar /usr/GenomeAnalysisTK.jar \
         -T BaseRecalibrator \
-        -I file.bam \
+        -I $bamfile \
         -R $reference \
         -knownSites $known \
-        -o file.recal_data.table \
+        -o ${key}.recal_data.table \
         -rf BadCigar
 
     # Step 2
     java -jar /usr/GenomeAnalysisTK.jar \
         -T BaseRecalibrator \
-        -I file.bam \
+        -I $bamfile \
         -R $reference \
         -knownSites $known \
-        -BQSR file.recal_data.table \
-        -o file.post_recal_data.table
+        -BQSR ${key}.recal_data.table \
+        -o ${key}.post_recal_data.table
 
     # Step 3 - Create before and after plots
     java -jar /usr/GenomeAnalysisTK.jar \
         -T AnalyzeCovariates \
         -R $reference \
-        -before file.recal_data.table \
-        -after file.post_recal_data.table \
-        -plots file.recalibration_plots.pdf
+        -before ${key}.recal_data.table \
+        -after ${key}.post_recal_data.table \
+        -plots ${key}.recalibration_plots.pdf
 
     # Step 4 - Base calibration
     java -jar /usr/GenomeAnalysisTK.jar \
         -T PrintReads \
-        -I file.bam \
+        -I $bamfile \
         -R $reference \
-        -BQSR file.recal_data.table \
-        -o file.recalibrated.bam
+        -BQSR ${key}.recal_data.table \
+        -o ${key}.recalibrated.bam
     """
 }
 
@@ -183,26 +184,26 @@ recalibrated_bam.tap { recalibrated_bam_flagstats; recalibrated_bam_hsmetrics; r
 
 process flagstats {
     input:
-        set val(key), file('file.bam'), file('file.bai') from recalibrated_bam_flagstats
+        set val(key), file(bamfile), file(bamix) from recalibrated_bam_flagstats
     output:
-        file('file.flagstat')
+        file("${key}.flagstat")
 
     publishDir 'out'
 
 
     script:
     """
-    samtools flagstat file.bam > file.flagstat
+    samtools flagstat $bamfile > ${key}.flagstat
     """
 }
 
 
 process haplotypeCaller {
     input:
-        set val(key), file('file.bam'), file('file.bai') from recalibrated_bam_haplotype
+        set val(key), file(bamfile), file(bamix) from recalibrated_bam_haplotype
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
-        set val(key), file('file.g.vcf') into haplotype_caller
+        set val(key), file("${key}.g.vcf") into haplotype_caller
 
 
     script:
@@ -210,11 +211,11 @@ process haplotypeCaller {
     java -jar /usr/GenomeAnalysisTK.jar \
         -T HaplotypeCaller\
         -R $reference \
-        -I file.bam \
+        -I $bamfile \
         --emitRefConfidence GVCF \
         --variant_index_type LINEAR \
         --variant_index_parameter 128000 \
-        -o file.g.vcf \
+        -o ${key}.g.vcf \
         -rf BadCigar
     """
 }
@@ -222,28 +223,28 @@ process haplotypeCaller {
 
 process haplotypeCallerCompress {
     input:
-        set val(key), file('file.g.vcf') from haplotype_caller
+        set val(key), file(vcffile) from haplotype_caller
     output:
-        set val(key), file('file.g.vcf.gz'), file('file.g.vcf.gz.tbi') into compress_haplocalled
+        set val(key), file("${key}.g.vcf.gz"), file("${key}.g.vcf.gz.tbi") into compress_haplocalled
 
     publishDir 'out'
 
 
     script:
     """
-    bgzip file.g.vcf
-    tabix file.g.vcf.gz
+    bgzip $vcffile
+    tabix ${vcffile}.gz
     """
 }
 
 
 process hsmetrics {
     input:
-        set val(key), file('file.bam'), file('file.bai') from recalibrated_bam_hsmetrics
+        set val(key), file(bamfile), file(bamix) from recalibrated_bam_hsmetrics
         file reference
 
     output:
-        file('file.hybridd_selection_metrics')
+        file("${key}.hybridd_selection_metrics")
 
     publishDir 'out'
 
@@ -255,8 +256,8 @@ process hsmetrics {
         R=$reference \
         BAIT_INTERVALS=$bait \
         TARGET_INTERVALS=$target \
-        INPUT=file.bam \
-        OUTPUT=file.hybrid_selection_metrics \
+        INPUT=$bamfile \
+        OUTPUT=${key}.hybrid_selection_metrics \
         VALIDATION_STRINGENCY=LENIENT
     """
 }
@@ -277,7 +278,7 @@ process gVCFCombine {
 
     input:
     set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
-    set val(keys), file('vcf?'), file('ix_vcf?') from collect_haplovcfs
+    set val(keys), file(vcfs), file(ix_vcfs) from collect_haplovcfs
     each chrom from chromosomes
      
     output:
@@ -285,10 +286,10 @@ process gVCFCombine {
 
     script:
     """
-    count=1; for k in ${keys.join(' ')}; do ln -s `pwd`/vcf\$count \$k.vcf.gz; ln -s `pwd`/ix_vcf\$count \$k.vcf.gz.tbi; ((count++)); done
+    #count=1; for k in ${keys.join(' ')}; do ln -s `pwd`/vcf\$count \$k.vcf.gz; ln -s `pwd`/ix_vcf\$count \$k.vcf.gz.tbi; ((count++)); done
     java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
         -T CombineGVCFs \
-        -V ${keys.collect { el -> return el+'.vcf.gz' }.join(' -V ')} \
+        -V ${vcfs.join(' -V ')} \
         -R $reference \
         -o ${chrom}.vcf -L $chrom
     """
