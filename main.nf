@@ -79,6 +79,7 @@ process gatk_realign {
 
     publishDir 'out'
 
+    tag "$key"
 
     script:
     """
@@ -108,6 +109,7 @@ process mark_duplicates {
 
     publishDir 'out'
 
+    tag "$key"
 
     script:
     """
@@ -136,6 +138,7 @@ process quality_recalibration {
 
     publishDir 'out'
 
+    tag "$key"
 
     script:
     """
@@ -190,6 +193,7 @@ process flagstats {
 
     publishDir 'out'
 
+    tag "$key"
 
     script:
     """
@@ -205,6 +209,7 @@ process haplotypeCaller {
     output:
         set val(key), file("${key}.g.vcf") into haplotype_caller
 
+    tag "$key"
 
     script:
     """
@@ -229,6 +234,7 @@ process haplotypeCallerCompress {
 
     publishDir 'out'
 
+    tag "$key"
 
     script:
     """
@@ -247,6 +253,8 @@ process hsmetrics {
         file("${key}.hybridd_selection_metrics")
 
     publishDir 'out'
+
+    tag "$key"
 
     when: false
 
@@ -282,11 +290,12 @@ process gVCFCombine {
     each chrom from chromosomes
      
     output:
-    file "${chrom}.vcf" into combined
+    set val(chrom), file("${chrom}.vcf") into combined
+    
+    tag "$chrom"
 
     script:
     """
-    #count=1; for k in ${keys.join(' ')}; do ln -s `pwd`/vcf\$count \$k.vcf.gz; ln -s `pwd`/ix_vcf\$count \$k.vcf.gz.tbi; ((count++)); done
     java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
         -T CombineGVCFs \
         -V ${vcfs.join(' -V ')} \
@@ -299,7 +308,9 @@ process gVCFCombine {
 process bgZipCombinedGVCF {
 
     input:
-    file combined_gvcf from combined
+    set val(chrom), file(combined_gvcf) from combined
+
+    tag "${chrom}"
 
     output:
     file "${combined_gvcf}.gz" into compressed_comb_gvcf
