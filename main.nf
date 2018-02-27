@@ -26,6 +26,13 @@ else {
 fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}.fq.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
 
+bamFiles = Channel.fromPath(params.bamDir + '*.bam')
+bamIndexed = Channel.fromPath(params.bamDir + '*.bam.bai')
+bamFiles
+  .merge( bamIndexed )
+  .map { it -> [it[0].baseName, it[0], it[1]] }
+  .into { readyBamFiles }
+
 
 infoMessage()
 
@@ -36,6 +43,8 @@ process fastqc {
 
     output:
         file "*_fastqc.{zip,html}" into fastQCreport
+
+    when: params.fastqDir
 
     publishDir "out"
 
@@ -55,6 +64,8 @@ process bwa {
         set val(key), file("${key}.bam"), file("${key}.bam.bai") into mapped_reads
 
     publishDir "out"
+    
+    when: params.fastqDir && ! params.bamDir
 
     tag "$key"
 
@@ -68,10 +79,13 @@ process bwa {
     """
 }
 
+mapped_reads
+  .concat( readyBamFiles )
+  .set { processed_bams }
 
 process gatk_realign {
     input:
-        set val(key), file(bamfile), file(bamix) from mapped_reads
+        set val(key), file(bamfile), file(bamix) from processed_bams
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
         file('name.intervals')
@@ -372,8 +386,8 @@ process genotype {
 def checkInputParams() {
     // Check required parameters and display error messages
     boolean fatal_error = false
-    if ( ! params.fastqDir ) {
-        log.warn("You need to provide a fastqDir (--fastqDir)")
+    if ( ! params.fastqDir && ! params.bamDir ) {
+        log.warn("You need to provide a fastqDir (--fastqDir) or a bamDir (--bamDir)")
         fatal_error = true
     }
     if ( ! params.reference ) {
@@ -398,6 +412,8 @@ def usageMessage() {
     Options:
         --fastqDir <Dir>
            Directory containing fastq samples (.fq.gz)
+        --bamDir <Dir>
+           Instead of --fastqDir, directory containing bam and indexed bam sample files (.bam, .bam.bai)
         --reference <file>
            Genome reference file (has to be indexed)
         --known <file>
