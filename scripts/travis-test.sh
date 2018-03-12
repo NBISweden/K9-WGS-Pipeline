@@ -6,25 +6,32 @@ if [ -z "$PROFILE" ]; then
     exit 1
 fi
 
-nextflow run main.nf -profile $PROFILE --verbose --fastqDir test-data/test-data-tiny
+nextflow run main.nf \
+    -profile singularity \
+    --verbose \
+    --fastqDir  test-data/test-data-tiny \
+    --reference test-data/test-data-tiny/reference_chr38-1000000-1030000.fa \
+    --known     test-data/test-data-tiny/known_chr38-1000000-1030000.bed \
+    --out       out-tiny
 
 # Very simple check to make sure that we have some output
-outbytes=$(wc -c out/file.bam | awk '{print $1}')
+outbytes=$(zcat out-tiny/all_samples_genotyping.vcf.gz | grep -v '^#' | wc -c)
 
-if [ $outbytes -lt 100 ]; then
+if [ $outbytes -lt 1000 ]; then
     exit 1
 fi
 
-nextflow run main.nf -profile $PROFILE \
+nextflow run main.nf \
+    -profile singularity \
     --verbose \
-    --fastqDir test-data/test-data-small/ \
+    --fastqDir  test-data/test-data-small/ \
     --reference test-data/test-data-small/reference_subset.fa \
-    --out out2 \
-    --known test-data/test-data-small/known_subset.bed
+    --known     test-data/test-data-small/known_subset.bed \
+    --out       out-small
 
 # Very simple check to make sure that we have some output
-outbytes=$(wc -c out2/file.bam | awk '{print $1}')
+outbytes=$(zcat out-small/all_samples_genotyping.vcf.gz | grep -v '^#' | wc -c)
 
-if [ $outbytes -lt 100 ]; then
+if [ $outbytes -lt 1000 ]; then
     exit 1
 fi
