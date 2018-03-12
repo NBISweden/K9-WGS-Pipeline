@@ -294,11 +294,23 @@ compress_haplocalled
   .set { collect_haplovcfs }
 
 
+gVCFCombine_ch = Channel.create()
+genotyping = Channel.create()
+if ( params.combineByChromosome ) {
+    collect_haplovcfs.set { gVCFCombine_ch }
+    genotyping.close()
+}
+else {
+    collect_haplovcfs.set { genotyping }
+    gVCFCombine_ch.close()
+}
+
+
 process gVCFCombine {
 
     input:
     set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
-    set val(keys), file(vcfs), file(ix_vcfs) from collect_haplovcfs
+    set val(keys), file(vcfs), file(ix_vcfs) from gVCFCombine_ch
     each chrom from chromosomes
 
     output:
@@ -307,6 +319,8 @@ process gVCFCombine {
     tag "$chrom"
 
     publishDir params.out
+
+    when params.combineByChromosome
 
     script:
     """
