@@ -70,7 +70,7 @@ process bwa {
 
 
     script:
-    readGroup = "@RG\\tID:Sample_79162\\tSM:bar\\tPL:ILLUMINA"
+    readGroup = "@RG\\tID:$key\\tSM:$key\\tPL:ILLUMINA"
     """
     bwa mem -t $task.cpus -M -R \'$readGroup\' $reference $fastqs |
         samtools sort --threads $task.cpus -m 4G > ${key}.bam
