@@ -5,23 +5,23 @@ if (params.help) {
 
 checkInputParams()
 
-reference = file(params.reference)
-refdir = file(reference.getParent())
+reference         = file(params.reference)
+refdir            = file(reference.getParent())
 referenceBwaIndex = file("${reference}.{amb,ann,bwt,pac,sa}")
-referenceFaIndex = file("${reference}.fai")
-referenceDict = file("${refdir}/${reference.getBaseName()}.dict")
-known     = file(params.known)
-outdir    = params.out
+referenceFaIndex  = file("${reference}.fai")
+referenceDict     = file("${refdir}/${reference.getBaseName()}.dict")
+known             = file(params.known)
+outdir            = params.out
 
 if ( refdir.name.contains('test-data-tiny') ) {
-    chromosomes = ['chr38'] 
-    }
+    chromosomes = ['chr38']
+}
 else if ( refdir.name.contains('test-data-small') ) {
     chromosomes = (36..38).collect {"chr${it}_1000000_1030000"} + ['chrX_1000000_1030000']
-    }
+}
 else {
     chromosomes = (1..38).collect {"chr${it}"} + ['chrX', 'chrY', 'chrM']
-    }
+}
 
 fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}.fq.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
@@ -300,10 +300,10 @@ process gVCFCombine {
     set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     set val(keys), file(vcfs), file(ix_vcfs) from collect_haplovcfs
     each chrom from chromosomes
-     
+
     output:
     set val(chrom), file("${chrom}.vcf") into combined
-    
+
     tag "$chrom"
 
     publishDir params.out
