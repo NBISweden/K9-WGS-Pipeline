@@ -41,13 +41,12 @@ process fastqc {
     tag "$key"
     input:
         set val(key), file(fastqs) from fastq_qc
-
     output:
         file "*_fastqc.{zip,html}" into fastQCreport
 
     when: params.fastqDir
 
-    publishDir "out"
+    publishDir params.out
 
 
     script:
@@ -65,10 +64,9 @@ process bwa {
     output:
         set val(key), file("${key}.bam"), file("${key}.bam.bai") into mapped_reads
 
-    publishDir "out"
-    
-    when: params.fastqDir && ! params.bamDir
+    publishDir params.out
 
+    when: params.fastqDir && ! params.bamDir
 
 
     script:
@@ -92,7 +90,7 @@ process gatk_realign {
         file('name.intervals')
         set val(key), file("${key}.realigned.bam"), file("${key}.realigned.bai") into realigned_reads
 
-    publishDir 'out'
+    publishDir params.out
 
     tag "$key"
 
@@ -122,7 +120,7 @@ process mark_duplicates {
     output:
         set val(key), file("${key}.realigned.marked.bam"), file("${key}.realigned.marked.bai") into marked_reads
 
-    publishDir 'out'
+    publishDir params.out
 
     tag "$key"
 
@@ -152,8 +150,7 @@ process quality_recalibration {
         set val(key), file("${key}.recalibrated.bam"), file("${key}.recalibrated.bai") into recalibrated_bam
         file("${key}.recalibration_plots.pdf")
 
-    publishDir 'out'
-
+    publishDir params.out
 
     script:
     """
@@ -206,7 +203,7 @@ process flagstats {
     output:
         file("${key}.flagstat")
 
-    publishDir 'out'
+    publishDir params.out
 
     tag "$key"
 
@@ -247,7 +244,7 @@ process haplotypeCallerCompress {
     output:
         set val(key), file("${key}.g.vcf.gz"), file("${key}.g.vcf.gz.tbi") into compress_haplocalled
 
-    publishDir 'out'
+    publishDir params.out
 
     tag "$key"
 
@@ -267,7 +264,7 @@ process hsmetrics {
     output:
         file("${key}.hybridd_selection_metrics")
 
-    publishDir 'out'
+    publishDir params.out
 
     tag "$key"
 
@@ -309,6 +306,8 @@ process gVCFCombine {
     
     tag "$chrom"
 
+    publishDir params.out
+
     script:
     """
     java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
@@ -330,6 +329,8 @@ process bgZipCombinedGVCF {
     output:
     file "${combined_gvcf}.gz" into compressed_comb_gvcf
 
+    publishDir params.out
+
     """
     bgzip $combined_gvcf
     """
@@ -348,6 +349,8 @@ process afterChrList {
     output:
     file 'chromosomes.vcf.gz' into combined_chromosomes
 
+    publishDir params.out
+
     script:
     """
     java -Xmx23g -cp /usr/GenomeAnalysisTK.jar org.broadinstitute.gatk.tools.CatVariants \
@@ -365,6 +368,8 @@ process genotype {
         file reference
     output:
         file 'genotyped.vcf.gz'
+
+    publishDir params.out
 
 
     script:
