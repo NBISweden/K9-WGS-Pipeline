@@ -38,6 +38,7 @@ infoMessage()
 
 
 process fastqc {
+    tag "$key"
     input:
         set val(key), file(fastqs) from fastq_qc
 
@@ -57,6 +58,7 @@ process fastqc {
 
 
 process bwa {
+    tag "$key"
     input:
         set val(key), file(fastqs) from fastq_bwa
         set file(reference), file(bwaindex) from Channel.value([reference, referenceBwaIndex])
@@ -67,7 +69,6 @@ process bwa {
     
     when: params.fastqDir && ! params.bamDir
 
-    tag "$key"
 
 
     script:
@@ -141,6 +142,7 @@ process mark_duplicates {
 
 
 process quality_recalibration {
+    tag "$key"
     input:
         set val(key), file(bamfile), file(bamix) from marked_reads
         file known
@@ -152,7 +154,6 @@ process quality_recalibration {
 
     publishDir 'out'
 
-    tag "$key"
 
     script:
     """
