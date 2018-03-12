@@ -375,13 +375,13 @@ process afterChrList {
 }
 
 
-/*
+
 process genotype {
     input:
-        set file('file.vcf.gz'), file('file.vcf.gz.tbi') from input
-        file reference
+        set val(keys), file(vcfs), file(ix_vcfs) from genotyping
+        set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
-        file 'genotyped.vcf.gz'
+        file 'all_samples_genotyping.vcf.gz'
 
     publishDir params.out
 
@@ -391,11 +391,10 @@ process genotype {
     java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
         -T GenotypeGVCFs \
         -R $reference \
-        -V samples.list \
+        -V ${vcfs.join(' -V ')} \
         -o all_samples_genotyping.vcf.gz
     """
 }
-*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
