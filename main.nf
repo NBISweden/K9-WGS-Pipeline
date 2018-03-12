@@ -31,7 +31,7 @@ bamIndexed = Channel.fromPath(params.bamDir + '*.bam.bai')
 bamFiles
   .merge( bamIndexed )
   .map { it -> [it[0].baseName, it[0], it[1]] }
-  .into { readyBamFiles }
+  .set { readyBamFiles }
 
 
 infoMessage()
