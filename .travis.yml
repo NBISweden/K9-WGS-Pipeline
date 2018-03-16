@@ -19,16 +19,15 @@ matrix:
   allow_failures:
     - env: NXF_VER=0.25.0 PROFILE=singularity SGT_VER=2.4.2
 
-install:
-  - sudo apt-get install squashfs-tools
-  - ./scripts/travis-install.sh
-  - ./scripts/setup_testdata.sh
-
-script:
-  - "./scripts/travis-test.sh"
-
 jobs:
   include:
+    - stage: test
+      install:
+        - sudo apt-get install squashfs-tools
+        - ./scripts/travis-install.sh
+        - ./scripts/setup_testdata.sh
+      script:
+        - ./scripts/travis-test.sh
     - stage: merge
       script: ./scripts/travis-merge.sh
       env: NXF_VER=0.28.0 PROFILE=singularity SGT_VER=2.4.2
