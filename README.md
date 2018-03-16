@@ -19,6 +19,7 @@ $ nextflow run main.nf -profile singularity --fastqDir test-data/test-data-tiny
 ## Authors
 
 - [Johan Viklund](https://github.com/viklund)
+- [Jorrit Boekel](https://github.com/glormph)
 
 
 [travis-badge]: https://api.travis-ci.org/NBISweden/K9-WGS-Pipeline.svg
