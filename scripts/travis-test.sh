@@ -15,7 +15,7 @@ nextflow run main.nf \
     --out       out-tiny
 
 # Very simple check to make sure that we have some output
-outbytes=$(zcat out-tiny/all_samples_genotyping.vcf.gz | grep -v '^#' | wc -c)
+outbytes=$(cat out-tiny/*{INDEL,SNP}*.vcf  | wc -c)
 
 if [ $outbytes -lt 1000 ]; then
     exit 1
@@ -30,7 +30,7 @@ nextflow run main.nf \
     --out       out-small
 
 # Very simple check to make sure that we have some output
-outbytes=$(zcat out-small/all_samples_genotyping.vcf.gz | grep -v '^#' | wc -c)
+outbytes=$(cat out-small/*{INDEL,SNP}*.vcf  | wc -c)
 
 if [ $outbytes -lt 1000 ]; then
     exit 1
