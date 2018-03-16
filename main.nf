@@ -257,6 +257,8 @@ process haplotypeCallerCompress {
 
 
 process hsmetrics {
+    tag "$key"
+
     input:
         set val(key), file(bamfile), file(bamix) from recalibrated_bam_hsmetrics
         file reference
@@ -265,8 +267,6 @@ process hsmetrics {
         file("${key}.hybridd_selection_metrics")
 
     publishDir params.out
-
-    tag "$key"
 
     when: false
 
