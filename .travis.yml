@@ -18,6 +18,6 @@ env:
 script: ./scripts/travis-install-test.sh
 
 jobs:
+  include:
     - stage: merge
       script: ./scripts/travis-merge.sh
-      env: NXF_VER=0.28.0 PROFILE=singularity SGT_VER=2.4.2
