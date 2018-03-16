@@ -10,4 +10,4 @@ export GIT_COMMITER_NAME='Johan Viklund'
 
 git checkout master || exit
 git merge "$TRAVIS_COMMIT" || exit
-git remote -v
+git push -q https://$GITHUB_TOKEN:x-oauth-basic@github.com/viklund/TestingAPIPushKey.git master
