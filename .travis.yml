@@ -11,8 +11,7 @@ env:
   - NXF_VER=0.25.0 PROFILE=singularity SGT_VER=2.4.1
   - NXF_VER=0.26.0 PROFILE=singularity SGT_VER=2.4.1
   - NXF_VER=0.27.0 PROFILE=singularity SGT_VER=2.4.1
-  - NXF_VER=0.27.4 PROFILE=singularity SGT_VER=2.4.1
-  - NXF_VER=0.27.4 PROFILE=docker      SGT_VER=2.4.1
+  - NXF_VER=0.28.0 PROFILE=docker      SGT_VER=2.4.1
   - NXF_VER=0.28.0 PROFILE=singularity SGT_VER=2.4.1
   - NXF_VER=0.28.0 PROFILE=singularity SGT_VER=2.4.2
 
