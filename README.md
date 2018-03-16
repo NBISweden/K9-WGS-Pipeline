@@ -1,7 +1,7 @@
 # K9-WGS-Pipeline
 [![Travis status][travis-badge]][travis-link]
 
-Nextflow pipeline for standardised variant calls on canine genomes
+Nextflow pipeline for standardised mapping and variant calls on canine genomes
 
 ## Usage
 
