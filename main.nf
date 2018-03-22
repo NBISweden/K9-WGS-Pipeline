@@ -146,10 +146,8 @@ process quality_recalibration {
         set val(key), file(bamfile), file(bamix) from marked_reads
         file known
     output:
-        file("${key}.recal_data.table")
-        file("${key}.post_recal_data.table")
+        file("${key}.*recal_data.table")
         set val(key), file("${key}.recalibrated.bam"), file("${key}.recalibrated.bai") into recalibrated_bam
-        file("${key}.recalibration_plots.pdf")
 
     publishDir "${params.out}/bam", mode: 'copy'
 
