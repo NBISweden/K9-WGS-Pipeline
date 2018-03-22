@@ -27,10 +27,8 @@ fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}.fq.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
 
 bamFiles = Channel.fromPath(params.bamDir + '*.bam')
-bamIndexed = Channel.fromPath(params.bamDir + '*.bam.bai')
 bamFiles
-  .merge( bamIndexed )
-  .map { it -> [it[0].baseName, it[0], it[1]] }
+  .map { [it.baseName, it, infer_bam_index_from_bam(it)] }
   .set { readyBamFiles }
 
 
@@ -509,4 +507,24 @@ def infoMessage() {
 Configuration environemnt:
     Out directory: $params.out
     """
+}
+
+def infer_bam_index_from_bam(f) {
+    // If the ".bam.bai" file does not exist, try ".bai" without ".bam"
+    return infer_filepath(f, /$/, '.bai')
+        ?: infer_filepath(f, /.bam$/, '.bai')
+        ?: filepath_from(f, /$/, '.bai') // Default filename if none exist
+}
+
+def filepath_from(from, match, replace) {
+    path = file( from.toString().replaceAll(match, replace) )
+    return path
+}
+
+def infer_filepath(from, match, replace) {
+    path = file( from.toString().replaceAll(match, replace) )
+    if (path.exists()) {
+        return path
+    }
+    return false
 }
