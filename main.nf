@@ -47,6 +47,7 @@ process fastqc {
 
     publishDir "${params.out}/fastqc", mode: 'copy'
 
+
     when: params.fastqDir
 
     script:
@@ -77,9 +78,11 @@ process bwa {
     """
 }
 
+
 mapped_reads
   .concat( readyBamFiles )
   .set { processed_bams }
+
 
 process gatk_realign {
     tag "$key"
@@ -90,7 +93,6 @@ process gatk_realign {
     output:
         file('name.intervals')
         set val(key), file("${key}.realigned.bam"), file("${key}.realigned.bai") into realigned_reads
-
 
 
     script:
@@ -149,8 +151,8 @@ process quality_recalibration {
         set val(key), file("${key}.recalibrated.bam"), file("${key}.recalibrated.bai") into recalibrated_bam
         file("${key}.recalibration_plots.pdf")
 
-
     publishDir "${params.out}/bam", mode: 'copy'
+
 
     script:
     """
@@ -250,6 +252,7 @@ process haplotypeCallerCompress {
 
     publishDir "${params.out}/haplotypeCaller", mode: 'copy'
 
+
     script:
     """
     bgzip $vcffile
@@ -284,6 +287,7 @@ process hsmetrics {
     """
 }
 
+
 /* COMBINE GVCF
 This needs to collect 150/200 samples from samples.list
 Unsure how to get those
@@ -294,7 +298,6 @@ compress_haplocalled
   .reduce([keys:[], vcfs:[], ixvcfs:[]]) { a, b -> a.keys.add(b[0]); a.vcfs.add(b[1]); a.ixvcfs.add(b[2]); return a }
   .map { it -> [it.keys, it.vcfs, it.ixvcfs] }
   .set { collect_haplovcfs }
-
 
 gVCFCombine_ch = Channel.create()
 genotyping = Channel.create()
@@ -319,6 +322,7 @@ process gVCFCombine {
         set val(chrom), file("${chrom}.vcf") into combined
 
     publishDir params.out, mode: 'copy'
+
 
     when params.combineByChromosome
 
@@ -347,6 +351,7 @@ process bgZipCombinedGVCF {
     """
 }
 
+
 compressed_comb_gvcf
   .collect()
   .set { combgvcfs }
@@ -370,7 +375,6 @@ process afterChrList {
 }
 
 
-
 process genotype {
     input:
         set val(keys), file(vcfs), file(ix_vcfs) from genotyping
@@ -391,7 +395,9 @@ process genotype {
     """
 }
 
+
 hardfilters.into { hardfilters_snp; hardfilters_indel }
+
 
 process hardfilters_snp {
     input:
@@ -449,6 +455,7 @@ process hardfilters_indel {
      --remove-filtered-all --recode --recode-INFO-all --maf 0.00001 --max-maf 0.99992
     """
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // FUNCTIONS                                                                  //
