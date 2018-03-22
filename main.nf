@@ -171,15 +171,7 @@ process quality_recalibration {
         -BQSR ${key}.recal_data.table \
         -o ${key}.post_recal_data.table
 
-    # Step 3 - Create before and after plots
-    java -jar /usr/GenomeAnalysisTK.jar \
-        -T AnalyzeCovariates \
-        -R $reference \
-        -before ${key}.recal_data.table \
-        -after ${key}.post_recal_data.table \
-        -plots ${key}.recalibration_plots.pdf
-
-    # Step 4 - Base calibration
+    # Step 3 - Base calibration
     java -jar /usr/GenomeAnalysisTK.jar \
         -T PrintReads \
         -I $bamfile \
