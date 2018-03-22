@@ -7,7 +7,7 @@ if [ -z "$PROFILE" ]; then
 fi
 
 nextflow run main.nf \
-    -profile singularity \
+    -profile $PROFILE \
     --verbose \
     --fastqDir  test-data/test-data-tiny \
     --reference test-data/test-data-tiny/reference.fa \
@@ -22,7 +22,7 @@ if [ $outbytes -lt 1000 ]; then
 fi
 
 nextflow run main.nf \
-    -profile singularity \
+    -profile $PROFILE \
     --verbose \
     --fastqDir  test-data/test-data-small/ \
     --reference test-data/test-data-small/reference.fa \
