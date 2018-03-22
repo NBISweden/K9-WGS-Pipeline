@@ -77,16 +77,11 @@ process bwa {
 }
 
 
-mapped_reads
-  .concat( readyBamFiles )
-  .set { processed_bams }
-
-
 process gatk_realign {
     tag "$key"
 
     input:
-        set val(key), file(bamfile), file(bamix) from processed_bams
+        set val(key), file(bamfile), file(bamix) from mapped_reads
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
         file('name.intervals')
@@ -195,7 +190,7 @@ process quality_recalibration {
 }
 
 
-recalibrated_bam.tap { recalibrated_bam_flagstats; recalibrated_bam_hsmetrics; recalibrated_bam_haplotype }
+recalibrated_bam.concat( readyBamFiles ).tap { recalibrated_bam_flagstats; recalibrated_bam_hsmetrics; recalibrated_bam_haplotype }
 
 
 process flagstats {
