@@ -45,10 +45,9 @@ process fastqc {
     output:
         file "*_fastqc.{zip,html}" into fastQCreport
 
-    when: params.fastqDir
-
     publishDir params.out
 
+    when: params.fastqDir
 
     script:
     """
