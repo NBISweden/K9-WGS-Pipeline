@@ -45,7 +45,7 @@ process fastqc {
     output:
         file "*_fastqc.{zip,html}" into fastQCreport
 
-    publishDir params.out
+    publishDir "${params.out}/fastqc", mode: 'copy'
 
     when: params.fastqDir
 
@@ -149,7 +149,8 @@ process quality_recalibration {
         set val(key), file("${key}.recalibrated.bam"), file("${key}.recalibrated.bai") into recalibrated_bam
         file("${key}.recalibration_plots.pdf")
 
-    publishDir params.out
+
+    publishDir "${params.out}/bam", mode: 'copy'
 
     script:
     """
@@ -204,7 +205,7 @@ process flagstats {
     output:
         file("${key}.flagstat")
 
-    publishDir params.out
+    publishDir "${params.out}/flagstats", mode: 'copy'
 
 
     script:
@@ -247,8 +248,7 @@ process haplotypeCallerCompress {
     output:
         set val(key), file("${key}.g.vcf.gz"), file("${key}.g.vcf.gz.tbi") into compress_haplocalled
 
-    publishDir params.out
-
+    publishDir "${params.out}/haplotypeCaller", mode: 'copy'
 
     script:
     """
@@ -268,7 +268,8 @@ process hsmetrics {
     output:
         file("${key}.hybridd_selection_metrics")
 
-    publishDir params.out
+    publishDir "${params.out}/hsmetrics"
+
 
     when: false
 
@@ -319,7 +320,7 @@ process gVCFCombine {
     output:
     set val(chrom), file("${chrom}.vcf") into combined
 
-    publishDir params.out
+    publishDir params.out, mode: 'copy'
 
     when params.combineByChromosome
 
@@ -381,7 +382,7 @@ process genotype {
     output:
         file 'all_samples_genotyping.vcf.gz*' into hardfilters
 
-    publishDir params.out
+    publishDir "${params.out}/genotype", mode: 'copy'
 
 
     script:
@@ -403,7 +404,8 @@ process hardfilters_snp {
     output:
         set file('*SNP*vcf'), file('filtered_snps*vcf')
 
-    publishDir params.out
+    publishDir "${params.out}/genotype", mode: 'copy'
+
 
     script:
     """
@@ -433,7 +435,8 @@ process hardfilters_indel {
     output:
         set file('*INDEL*vcf'), file('filtered_indels*vcf')
 
-    publishDir params.out
+    publishDir "${params.out}/genotype", mode: 'copy'
+
 
     script:
     """
