@@ -149,7 +149,10 @@ process quality_recalibration {
         file("${key}.*recal_data.table")
         set val(key), file("${key}.recalibrated.bam"), file("${key}.recalibrated.bai") into recalibrated_bam
 
-    publishDir "${params.out}/bam", mode: 'copy'
+    publishDir "${params.out}", mode: 'copy', saveAs: {
+            type = it =~ /(ba(m|i))$/;
+            type ? "bam/${key}.${type[0][1]}" : "report/$it"
+        }
 
 
     script:

@@ -7,3 +7,6 @@ work
 *.fa.fai
 *.fa.pac
 *.fa.sa
+timeline.html*
+trace.txt*
+report.html*
