@@ -58,16 +58,15 @@ process fastqc {
 
 process bwa {
     tag "$key"
+
     input:
         set val(key), file(fastqs) from fastq_bwa
         set file(reference), file(bwaindex) from Channel.value([reference, referenceBwaIndex])
     output:
         set val(key), file("${key}.bam"), file("${key}.bam.bai") into mapped_reads
 
-    publishDir params.out
 
     when: params.fastqDir && ! params.bamDir
-
 
     script:
     readGroup = "@RG\\tID:$key\\tSM:$key\\tPL:ILLUMINA"
@@ -89,8 +88,6 @@ process gatk_realign {
     output:
         file('name.intervals')
         set val(key), file("${key}.realigned.bam"), file("${key}.realigned.bai") into realigned_reads
-
-    publishDir params.out
 
     tag "$key"
 
@@ -119,8 +116,6 @@ process mark_duplicates {
         set val(key), file(bamfile), file(bamix) from realigned_reads
     output:
         set val(key), file("${key}.realigned.marked.bam"), file("${key}.realigned.marked.bai") into marked_reads
-
-    publishDir params.out
 
     tag "$key"
 
@@ -343,7 +338,6 @@ process bgZipCombinedGVCF {
     output:
     file "${combined_gvcf}.gz" into compressed_comb_gvcf
 
-    publishDir params.out
 
     """
     bgzip $combined_gvcf
@@ -363,7 +357,6 @@ process afterChrList {
     output:
     file 'chromosomes.vcf.gz' into combined_chromosomes
 
-    publishDir params.out
 
     script:
     """
