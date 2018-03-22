@@ -15,6 +15,10 @@ env:
     - NXF_VER=0.28.0 PROFILE=docker      SGT_VER=2.4.2
     - NXF_VER=0.28.0 PROFILE=singularity SGT_VER=2.4.2
 
+matrix:
+  allow_failures:
+    - env: NXF_VER=0.28.0 PROFILE=docker      SGT_VER=2.4.2
+
 script: ./scripts/travis-install-test.sh
 
 jobs:
