@@ -264,7 +264,6 @@ process hsmetrics {
     input:
         set val(key), file(bamfile), file(bamix) from recalibrated_bam_hsmetrics
         file reference
-
     output:
         file("${key}.hybridd_selection_metrics")
 
@@ -313,12 +312,11 @@ process gVCFCombine {
     tag "$chrom"
 
     input:
-    set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
-    set val(keys), file(vcfs), file(ix_vcfs) from gVCFCombine_ch
-    each chrom from chromosomes
-
+        set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
+        set val(keys), file(vcfs), file(ix_vcfs) from gVCFCombine_ch
+        each chrom from chromosomes
     output:
-    set val(chrom), file("${chrom}.vcf") into combined
+        set val(chrom), file("${chrom}.vcf") into combined
 
     publishDir params.out, mode: 'copy'
 
@@ -339,10 +337,9 @@ process bgZipCombinedGVCF {
     tag "$chrom"
 
     input:
-    set val(chrom), file(combined_gvcf) from combined
-
+        set val(chrom), file(combined_gvcf) from combined
     output:
-    file "${combined_gvcf}.gz" into compressed_comb_gvcf
+        file "${combined_gvcf}.gz" into compressed_comb_gvcf
 
 
     """
@@ -357,11 +354,10 @@ compressed_comb_gvcf
 
 process afterChrList {
     input:
-    file reference
-    file chromosomes from combgvcfs
-
+        file reference
+        file chromosomes from combgvcfs
     output:
-    file 'chromosomes.vcf.gz' into combined_chromosomes
+        file 'chromosomes.vcf.gz' into combined_chromosomes
 
 
     script:
@@ -431,7 +427,6 @@ process hardfilters_indel {
     input:
         set file(vcf), file(index) from hardfilters_indel
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
-
     output:
         set file('*INDEL*vcf'), file('filtered_indels*vcf')
 
