@@ -15,7 +15,7 @@ nextflow run main.nf \
     --out       out-tiny
 
 # Very simple check to make sure that we have some output
-outbytes=$(cat out-tiny/*{INDEL,SNP}*.vcf  | wc -c)
+outbytes=$(cat out-tiny/genotype/*{INDEL,SNP}*.vcf  | wc -c)
 
 if [ $outbytes -lt 1000 ]; then
     exit 1
@@ -30,7 +30,7 @@ nextflow run main.nf \
     --out       out-small
 
 # Very simple check to make sure that we have some output
-outbytes=$(cat out-small/*{INDEL,SNP}*.vcf  | wc -c)
+outbytes=$(cat out-small/genotype/*{INDEL,SNP}*.vcf  | wc -c)
 
 if [ $outbytes -lt 1000 ]; then
     exit 1
