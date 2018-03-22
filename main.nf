@@ -121,19 +121,19 @@ process mark_duplicates {
     input:
         set val(key), file(bamfile), file(bamix) from realigned_reads
     output:
-        set val(key), file("${key}.realigned.marked.bam"), file("${key}.realigned.marked.bai") into marked_reads
+        set val(key), file("${key}.marked.bam"), file("${key}.marked.bai") into marked_reads
 
 
     script:
     """
     picard MarkDuplicates.jar \
         INPUT=$bamfile \
-        OUTPUT=${key}.realigned.marked.bam \
-        METRICS_FILE=${key}.realigned.marked.metrics \
+        OUTPUT=${key}.marked.bam \
+        METRICS_FILE=${key}.marked.metrics \
         VALIDATION_STRINGENCY=LENIENT
 
     picard BuildBamIndex.jar \
-        INPUT=${key}.realigned.marked.bam \
+        INPUT=${key}.marked.bam \
         VALIDATION_STRINGENCY=LENIENT
     """
 }
