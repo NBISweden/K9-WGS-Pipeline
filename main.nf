@@ -43,7 +43,7 @@ process fastqc {
     input:
         set val(key), file(fastqs) from fastq_qc
     output:
-        file "*_fastqc.{zip,html}" into fastQCreport
+        file "*fastqc.{html,zip}"
 
     publishDir "${params.out}/fastqc", mode: 'copy'
 
