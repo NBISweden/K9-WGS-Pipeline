@@ -45,7 +45,7 @@ process fastqc {
     output:
         file "*fastqc.{html,zip}"
 
-    publishDir "${params.out}/fastqc", mode: 'copy'
+    publishDir "${params.out}/report", mode: 'copy'
 
 
     when: params.fastqDir
@@ -207,7 +207,7 @@ process flagstats {
     output:
         file("${key}.flagstat")
 
-    publishDir "${params.out}/flagstats", mode: 'copy'
+    publishDir "${params.out}/report", mode: 'copy'
 
 
     script:
@@ -270,7 +270,7 @@ process hsmetrics {
     output:
         file("${key}.hybridd_selection_metrics")
 
-    publishDir "${params.out}/hsmetrics"
+    publishDir "${params.out}/report"
 
 
     when: false
