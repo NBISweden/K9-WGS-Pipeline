@@ -39,6 +39,7 @@ infoMessage()
 
 process fastqc {
     tag "$key"
+
     input:
         set val(key), file(fastqs) from fastq_qc
     output:
@@ -82,6 +83,8 @@ mapped_reads
   .set { processed_bams }
 
 process gatk_realign {
+    tag "$key"
+
     input:
         set val(key), file(bamfile), file(bamix) from processed_bams
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
@@ -89,7 +92,7 @@ process gatk_realign {
         file('name.intervals')
         set val(key), file("${key}.realigned.bam"), file("${key}.realigned.bai") into realigned_reads
 
-    tag "$key"
+
 
     script:
     """
@@ -112,12 +115,13 @@ process gatk_realign {
 
 
 process mark_duplicates {
+    tag "$key"
+
     input:
         set val(key), file(bamfile), file(bamix) from realigned_reads
     output:
         set val(key), file("${key}.realigned.marked.bam"), file("${key}.realigned.marked.bai") into marked_reads
 
-    tag "$key"
 
     script:
     """
@@ -136,6 +140,7 @@ process mark_duplicates {
 
 process quality_recalibration {
     tag "$key"
+
     input:
         set val(key), file(bamfile), file(bamix) from marked_reads
         file known
@@ -193,6 +198,8 @@ recalibrated_bam.tap { recalibrated_bam_flagstats; recalibrated_bam_hsmetrics; r
 
 
 process flagstats {
+    tag "$key"
+
     input:
         set val(key), file(bamfile), file(bamix) from recalibrated_bam_flagstats
     output:
@@ -200,7 +207,6 @@ process flagstats {
 
     publishDir params.out
 
-    tag "$key"
 
     script:
     """
@@ -210,13 +216,14 @@ process flagstats {
 
 
 process haplotypeCaller {
+    tag "$key"
+
     input:
         set val(key), file(bamfile), file(bamix) from recalibrated_bam_haplotype
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
         set val(key), file("${key}.g.vcf") into haplotype_caller
 
-    tag "$key"
 
     script:
     """
@@ -234,6 +241,8 @@ process haplotypeCaller {
 
 
 process haplotypeCallerCompress {
+    tag "$key"
+
     input:
         set val(key), file(vcffile) from haplotype_caller
     output:
@@ -241,7 +250,6 @@ process haplotypeCallerCompress {
 
     publishDir params.out
 
-    tag "$key"
 
     script:
     """
@@ -302,6 +310,7 @@ else {
 
 
 process gVCFCombine {
+    tag "$chrom"
 
     input:
     set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
@@ -310,8 +319,6 @@ process gVCFCombine {
 
     output:
     set val(chrom), file("${chrom}.vcf") into combined
-
-    tag "$chrom"
 
     publishDir params.out
 
@@ -329,11 +336,10 @@ process gVCFCombine {
 
 
 process bgZipCombinedGVCF {
+    tag "$chrom"
 
     input:
     set val(chrom), file(combined_gvcf) from combined
-
-    tag "${chrom}"
 
     output:
     file "${combined_gvcf}.gz" into compressed_comb_gvcf
