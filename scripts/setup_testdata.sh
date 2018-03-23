@@ -22,6 +22,10 @@ for DIR in test-data/*; do
         R=$GENOME_REFERENCE \
         O=${GENOME_REFERENCE/%.fa/.dict} || echo "Picard fail"
 
+    for BAMFILE in *.bam; do
+        singularity exec ../../bwa.simg samtools index "$BAMFILE"
+    done
+
     cd ../..
 done
 
