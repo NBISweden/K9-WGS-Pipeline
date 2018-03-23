@@ -114,6 +114,9 @@ process mark_duplicates {
         set val(key), file(bamfile), file(bamix) from realigned_reads
     output:
         set val(key), file("${key}.marked.bam"), file("${key}.marked.bai") into marked_reads
+        file("*.metrics")
+
+    publishDir "${params.out}/report", mode: 'copy', saveAs: { it =~ /metrics$/ ? it : null }
 
 
     script:
@@ -190,7 +193,7 @@ process flagstats {
     input:
         set val(key), file(bamfile), file(bamix) from recalibrated_bam_flagstats
     output:
-        file("${key}.flagstat")
+        file("${key}.*stat*")
 
     publishDir "${params.out}/report", mode: 'copy'
 
@@ -198,6 +201,7 @@ process flagstats {
     script:
     """
     samtools flagstat $bamfile > ${key}.flagstat
+    samtools stats    $bamfile > ${key}.stats
     """
 }
 
