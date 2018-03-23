@@ -84,7 +84,6 @@ process gatk_realign {
         set val(key), file(bamfile), file(bamix) from mapped_reads
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
-        file('name.intervals')
         set val(key), file("${key}.realigned.bam"), file("${key}.realigned.bai") into realigned_reads
 
 
