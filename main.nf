@@ -362,9 +362,10 @@ process bgZipCombinedGVCF {
 }
 
 
-compressed_comb_gvcf
-  .collect()
-  .set { combgvcfs }
+genotyping.mix( compressed_comb_gvcf )
+          .map { it[0] instanceof List ? ['all', it[1], it[2]] : it }
+          .set { genotyping }
+
 
 
 process afterChrList {
