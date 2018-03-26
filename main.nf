@@ -376,8 +376,6 @@ process genotype {
     output:
         set val(key), file("${key}_genotyping.vcf.gz"), file("${key}_genotyping.vcf.gz.tbi") into genotyped
 
-    publishDir "${params.out}/genotype", mode: 'copy'
-
 
     script:
     """
@@ -388,6 +386,25 @@ process genotype {
         -o ${key}_genotyping.vcf.gz
     """
 }
+
+
+process combineChrVCFs {
+    input:
+        set val(keys), file(vcf), file(idx) from genotyped.toList().transpose().toList()
+    output:
+        set val('all'), file('all.vcf.gz'), file('all.vcf.gz.tbi') into hardfilters
+
+    publishDir "${params.out}/genotype", mode: 'copy'
+
+    script:
+    """
+    java -Xmx23g -cp /usr/GenomeAnalysisTK.jar org.broadinstitute.gatk.tools.CatVariants \
+        -R $reference \
+        -V ${vcf.join(' -V ')} \
+        -out all.vcf.gz -assumeSorted
+    """
+}
+
 
 
 hardfilters.into { hardfilters_snp; hardfilters_indel }
