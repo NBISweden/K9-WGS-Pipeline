@@ -251,7 +251,7 @@ process hsmetrics {
     output:
         file("${key}.hybridd_selection_metrics")
 
-    publishDir "${params.out}/report"
+    publishDir "${params.out}/report", mode: 'copy'
 
 
     when: false
