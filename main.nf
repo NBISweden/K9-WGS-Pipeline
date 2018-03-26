@@ -412,10 +412,10 @@ hardfilters.into { hardfilters_snp; hardfilters_indel }
 
 process hardfilters_snp {
     input:
-        set file(vcf), file(index) from hardfilters_snp
+        set val(key), file(vcf), file(index) from hardfilters_snp
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
-        set file('*SNP*vcf'), file('filtered_snps*vcf')
+        set file('*SNP*vcf'), file('*filtered_snps*vcf')
 
     publishDir "${params.out}/genotype", mode: 'copy'
 
@@ -423,29 +423,29 @@ process hardfilters_snp {
     script:
     """
     java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T SelectVariants -R $reference \
-        -V $vcf -selectType SNP -o raw_SNP_1.vcf
+        -V $vcf -selectType SNP -o ${key}_raw_SNP_1.vcf
 
-    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T VariantFiltration -R $reference -V raw_SNP_1.vcf \
+    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T VariantFiltration -R $reference -V ${key}_raw_SNP_1.vcf \
         --filterExpression "QD < 2.0" --filterName "QD_less_than_2_filter" \
         --filterExpression "FS > 60.0" --filterName "FS_greater_than_60_filter" \
         --filterExpression "SOR > 3.0" --filterName "SOR_greater_than_3_filter" \
         --filterExpression "MQ < 40.0" --filterName "MQ_less_than_40_filter" \
         --filterExpression "MQRankSum < -12.5" --filterName "MQRankSum_less_than_-12.5_filter" \
         --filterExpression "ReadPosRankSum < -8.0" --filterName "ReadPosRankSum_less_than_-8_filter" \
-        -o filtered_snps_1.vcf \
+        -o ${key}_filtered_snps_1.vcf \
 
-    vcftools --vcf filtered_snps_1.vcf --keep-filtered PASS --out pass_SNP_1 --remove-filtered-geno-all  \
-     --remove-filtered-all --recode --recode-INFO-all --maf 0.00001 --max-maf 0.99992
+    vcftools --vcf ${key}_filtered_snps_1.vcf --keep-filtered PASS --out ${key}_pass_SNP_1 --remove-filtered-geno-all  \
+        --remove-filtered-all --recode --recode-INFO-all --maf 0.00001 --max-maf 0.99992
      """
 }
 
 
 process hardfilters_indel {
     input:
-        set file(vcf), file(index) from hardfilters_indel
+        set val(key), file(vcf), file(index) from hardfilters_indel
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
-        set file('*INDEL*vcf'), file('filtered_indels*vcf')
+        set file('*INDEL*vcf'), file('*filtered_indels*vcf')
 
     publishDir "${params.out}/genotype", mode: 'copy'
 
@@ -453,17 +453,17 @@ process hardfilters_indel {
     script:
     """
     java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T SelectVariants -R $reference \
-        -V $vcf -selectType INDEL -o raw_INDEL_1.vcf
+        -V $vcf -selectType INDEL -o ${key}_raw_INDEL_1.vcf
 
-    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T VariantFiltration -R $reference -V raw_INDEL_1.vcf \
+    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T VariantFiltration -R $reference -V ${key}_raw_INDEL_1.vcf \
         --filterExpression "QD < 2.0" --filterName "QD_less_than_2_filter" \
         --filterExpression "FS > 200.0" --filterName "FS_greater_than_60_filter" \
         --filterExpression "SOR > 10.0" --filterName "SOR_greater_than_3_filter" \
         --filterExpression "ReadPosRankSum < -20.0" --filterName "ReadPosRankSum_less_than_-8_filter" \
-        -o filtered_indels_1.vcf
+        -o ${key}_filtered_indels_1.vcf
 
-    vcftools --vcf filtered_indels_1.vcf  --keep-filtered PASS --out pass_INDEL_1 --remove-filtered-geno-all  \
-     --remove-filtered-all --recode --recode-INFO-all --maf 0.00001 --max-maf 0.99992
+    vcftools --vcf ${key}_filtered_indels_1.vcf  --keep-filtered PASS --out ${key}_pass_INDEL_1 --remove-filtered-geno-all  \
+        --remove-filtered-all --recode --recode-INFO-all --maf 0.00001 --max-maf 0.99992
     """
 }
 
