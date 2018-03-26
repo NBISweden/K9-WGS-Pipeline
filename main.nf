@@ -354,11 +354,12 @@ process bgZipCombinedGVCF {
     input:
         set val(chrom), file(combined_gvcf) from combined
     output:
-        file "${combined_gvcf}.gz" into compressed_comb_gvcf
+        set val(chrom), file("${combined_gvcf}.gz"), file("*.gz.tbi") into compressed_comb_gvcf
 
 
     """
     bgzip $combined_gvcf
+    tabix ${combined_gvcf}.gz
     """
 }
 
