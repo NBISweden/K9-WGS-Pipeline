@@ -332,8 +332,6 @@ process gVCFCombine {
     output:
         set val(chrom), file("${chrom}.vcf") into combined
 
-    publishDir params.out, mode: 'copy'
-
 
     when params.combineByChromosome
 
