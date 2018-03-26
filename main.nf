@@ -13,15 +13,7 @@ referenceDict     = file("${refdir}/${reference.getBaseName()}.dict")
 known             = file(params.known)
 outdir            = params.out
 
-if ( refdir.name.contains('test-data-tiny') ) {
-    chromosomes = ['chr38']
-}
-else if ( refdir.name.contains('test-data-small') ) {
-    chromosomes = (36..38).collect {"chr${it}_1000000_1030000"} + ['chrX_1000000_1030000']
-}
-else {
-    chromosomes = (1..38).collect {"chr${it}"} + ['chrX', 'chrY', 'chrM']
-}
+chromosomes = (1..38).collect {"chr${it}"} + ['chrX', 'chrY', 'chrM']
 
 fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}.fq.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
@@ -297,13 +289,46 @@ else {
 }
 
 
+process grab_chromosome_names_from_reference {
+    input:
+        file reference from Channel.value(reference)
+    output:
+        file 'chromosomes.names' into chromosome_names
+
+    executor 'local'
+
+    script:
+    """
+    grep '^>' $reference | sed 's/^>//' > chromosomes.names
+    """
+}
+
+process filter_chromosomes {
+    tag "$chrom"
+
+    input:
+        file chrom_names from chromosome_names
+        each chrom from chromosomes
+    output:
+        val chrom into chromosomes_existing
+
+    errorStrategy 'ignore'
+    executor 'local'
+
+    script:
+    """
+    grep -q '^$chrom\$' $chrom_names
+    """
+}
+
+
 process gVCFCombine {
     tag "$chrom"
 
     input:
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
-        set val(keys), file(vcfs), file(ix_vcfs) from gVCFCombine_ch
-        each chrom from chromosomes
+        set val(key), file(vcfs), file(ix_vcfs) from gVCFCombine_ch
+        each chrom from chromosomes_existing
     output:
         set val(chrom), file("${chrom}.vcf") into combined
 
