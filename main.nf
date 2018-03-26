@@ -368,11 +368,13 @@ genotyping.mix( compressed_comb_gvcf )
 
 
 process genotype {
+    tag "$key"
+
     input:
-        set val(keys), file(vcfs), file(ix_vcfs) from genotyping
+        set val(key), file(vcfs), file(ix_vcfs) from genotyping
         set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
     output:
-        file 'all_samples_genotyping.vcf.gz*' into hardfilters
+        set val(key), file("${key}_genotyping.vcf.gz"), file("${key}_genotyping.vcf.gz.tbi") into genotyped
 
     publishDir "${params.out}/genotype", mode: 'copy'
 
@@ -383,7 +385,7 @@ process genotype {
         -T GenotypeGVCFs \
         -R $reference \
         -V ${vcfs.join(' -V ')} \
-        -o all_samples_genotyping.vcf.gz
+        -o ${key}_genotyping.vcf.gz
     """
 }
 
