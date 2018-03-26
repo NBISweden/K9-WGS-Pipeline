@@ -367,25 +367,6 @@ genotyping.mix( compressed_comb_gvcf )
           .set { genotyping }
 
 
-
-process afterChrList {
-    input:
-        file reference
-        file chromosomes from combgvcfs
-    output:
-        file 'chromosomes.vcf.gz' into combined_chromosomes
-
-
-    script:
-    """
-    java -Xmx23g -cp /usr/GenomeAnalysisTK.jar org.broadinstitute.gatk.tools.CatVariants \
-        -R $reference \
-        -V ${chromosomes.join(' -V ')} \
-        -out chromosomes.vcf.gz -assumeSorted
-    """
-}
-
-
 process genotype {
     input:
         set val(keys), file(vcfs), file(ix_vcfs) from genotyping
