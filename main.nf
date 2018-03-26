@@ -283,10 +283,7 @@ Unsure how to get those
 Script also runs one per chromosome it seems, could use each
 */
 
-compress_haplocalled
-  .reduce([keys:[], vcfs:[], ixvcfs:[]]) { a, b -> a.keys.add(b[0]); a.vcfs.add(b[1]); a.ixvcfs.add(b[2]); return a }
-  .map { it -> [it.keys, it.vcfs, it.ixvcfs] }
-  .set { collect_haplovcfs }
+compress_haplocalled.toList().transpose().toList().set { collect_haplovcfs }
 
 gVCFCombine_ch = Channel.create()
 genotyping = Channel.create()
