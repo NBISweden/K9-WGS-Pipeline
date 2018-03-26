@@ -1,5 +1,7 @@
 #!/bin/bash
 
+exit 1
+
 echo "INSTALL DEPS"
 sudo apt-get install squashfs-tools
 ./scripts/travis-install.sh
