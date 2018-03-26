@@ -1,6 +1,6 @@
 #!/bin/bash
 
-exit 1
+exit 2
 
 echo "INSTALL DEPS"
 sudo apt-get install squashfs-tools
