@@ -1,10 +1,11 @@
 #!/bin/bash
+set -x
 
-if [ "$#" -ne 3 ];then
+if [ "$#" -lt 3 ];then
     cat >&2 <<END_USAGE
 Usage:
 
-    $0 <profile> <datadir> <type>
+    $0 <profile> <datadir> <type> [chromosomes]
 
         profile: docker or singularity
         datadir: tiny or small
@@ -21,6 +22,12 @@ fi
 PROFILE=$1
 DATADIR=$2
 TYPE=$3
+CHROMOSOMES=""
+
+if [ ! -z "$4" ]; then
+    CHROMOSOMES="--chromosomes $4"
+fi
+
 
 FULLPATH=test-data/test-data-$DATADIR/
 OUT=out-${DATADIR}-${TYPE}
@@ -28,6 +35,7 @@ OUT=out-${DATADIR}-${TYPE}
 nextflow run main.nf \
     -profile $PROFILE \
     --verbose \
+    $CHROMOSOMES \
     --${TYPE}Dir $FULLPATH \
     --reference  $FULLPATH/reference.fa \
     --known      $FULLPATH/known.bed \
