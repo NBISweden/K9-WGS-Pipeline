@@ -10,5 +10,3 @@ RUN apt-get -y install pkg-config && \
     ./configure && \
     make && \
     make install
-
-RUN mkdir /pica /proj /scratch /sw

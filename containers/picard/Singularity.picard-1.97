@@ -9,5 +9,3 @@ MAINTAINER johan.viklund@nbis.se
 conda config --add channels conda-forge
 conda config --add channels bioconda
 conda install picard=1.97
-
-mkdir /pica /proj /scratch /sw

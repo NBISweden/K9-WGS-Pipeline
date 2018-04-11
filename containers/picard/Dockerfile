@@ -6,5 +6,3 @@ LABEL author="Johan Viklund" \
 RUN conda config --add channels conda-forge \
     && conda config --add channels bioconda \
     && conda install picard=1.97
-
-RUN mkdir /pica /proj /scratch /sw
