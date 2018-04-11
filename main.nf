@@ -113,13 +113,13 @@ process mark_duplicates {
 
     script:
     """
-    picard MarkDuplicates.jar \
+    picard MarkDuplicates \
         INPUT=$bamfile \
         OUTPUT=${key}.marked.bam \
         METRICS_FILE=${key}.marked.metrics \
         VALIDATION_STRINGENCY=LENIENT
 
-    picard BuildBamIndex.jar \
+    picard BuildBamIndex \
         INPUT=${key}.marked.bam \
         VALIDATION_STRINGENCY=LENIENT
     """
@@ -176,7 +176,7 @@ process quality_recalibration {
 }
 
 
-recalibrated_bam.concat( readyBamFiles ).tap { recalibrated_bam_flagstats; recalibrated_bam_hsmetrics; recalibrated_bam_haplotype }
+recalibrated_bam.concat( readyBamFiles ).tap { recalibrated_bam_flagstats; recalibrated_bam_wgsmetrics; recalibrated_bam_haplotype }
 
 
 process flagstats {
@@ -242,29 +242,24 @@ process haplotypeCallerCompress {
 }
 
 
-process hsmetrics {
+process wgsmetrics {
     tag "$key"
 
     input:
-        set val(key), file(bamfile), file(bamix) from recalibrated_bam_hsmetrics
+        set val(key), file(bamfile), file(bamix) from recalibrated_bam_wgsmetrics
         file reference
     output:
-        file("${key}.hybridd_selection_metrics")
+        file("${key}.wgs_metrics")
 
     publishDir "${params.out}/report", mode: 'copy'
 
 
-    when: false
-
     script:
     """
-    picard CalculateHsMetrics.jar \
+    picard CollectWgsMetrics \
         R=$reference \
-        BAIT_INTERVALS=$bait \
-        TARGET_INTERVALS=$target \
         INPUT=$bamfile \
-        OUTPUT=${key}.hybrid_selection_metrics \
-        VALIDATION_STRINGENCY=LENIENT
+        OUTPUT=${key}.wgs_metrics
     """
 }
 
