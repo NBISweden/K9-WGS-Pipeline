@@ -493,7 +493,11 @@ def infoMessage() {
     log.info """\
 *** K9 WGS Pipeline ***
 Configuration environemnt:
-    Out directory: $params.out
+    Out directory:   $params.out
+    Fastq directory: $params.fastqDir
+    Bam directory:   $params.bamDir
+    Reference:       $params.reference
+    OnlyMap?:        $params.onlyMap
     """
 }
 
