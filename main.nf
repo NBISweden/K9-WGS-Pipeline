@@ -219,216 +219,218 @@ process wgsmetrics {
 }
 
 
-process haplotypeCaller {
-    tag "$key"
+if ( !params.onlyMap ) {
+    process haplotypeCaller {
+        tag "$key"
 
-    input:
-        set val(key), file(bamfile), file(bamix) from recalibrated_bam_haplotype
-        set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
-    output:
-        set val(key), file("${key}.g.vcf") into haplotype_caller
-
-
-    script:
-    """
-    java -jar /usr/GenomeAnalysisTK.jar \
-        -T HaplotypeCaller\
-        -R $reference \
-        -I $bamfile \
-        --emitRefConfidence GVCF \
-        --variant_index_type LINEAR \
-        --variant_index_parameter 128000 \
-        -o ${key}.g.vcf \
-        -rf BadCigar
-    """
-}
+        input:
+            set val(key), file(bamfile), file(bamix) from recalibrated_bam_haplotype
+            set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
+        output:
+            set val(key), file("${key}.g.vcf") into haplotype_caller
 
 
-process haplotypeCallerCompress {
-    tag "$key"
-
-    input:
-        set val(key), file(vcffile) from haplotype_caller
-    output:
-        set val(key), file("${key}.g.vcf.gz"), file("${key}.g.vcf.gz.tbi") into compress_haplocalled
-
-    publishDir "${params.out}/haplotypeCaller", mode: 'copy'
-
-
-    script:
-    """
-    bgzip $vcffile
-    tabix ${vcffile}.gz
-    """
-}
+        script:
+        """
+        java -jar /usr/GenomeAnalysisTK.jar \
+            -T HaplotypeCaller\
+            -R $reference \
+            -I $bamfile \
+            --emitRefConfidence GVCF \
+            --variant_index_type LINEAR \
+            --variant_index_parameter 128000 \
+            -o ${key}.g.vcf \
+            -rf BadCigar
+        """
+    }
 
 
-/* COMBINE GVCF
-This needs to collect 150/200 samples from samples.list
-Unsure how to get those
-Script also runs one per chromosome it seems, could use each
-*/
+    process haplotypeCallerCompress {
+        tag "$key"
 
-compress_haplocalled.toList().transpose().toList().set { collect_haplovcfs }
+        input:
+            set val(key), file(vcffile) from haplotype_caller
+        output:
+            set val(key), file("${key}.g.vcf.gz"), file("${key}.g.vcf.gz.tbi") into compress_haplocalled
 
-gVCFCombine_ch = Channel.create()
-genotyping = Channel.create()
-if ( params.combineByChromosome ) {
-    collect_haplovcfs.set { gVCFCombine_ch }
-    genotyping.close()
-}
-else {
-    collect_haplovcfs.set { genotyping }
-    gVCFCombine_ch.close()
-}
+        publishDir "${params.out}/haplotypeCaller", mode: 'copy'
 
 
-process gVCFCombine {
-    tag "$chrom"
-
-    input:
-        set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
-        set val(key), file(vcfs), file(ix_vcfs) from gVCFCombine_ch
-        each chrom from chromosomes
-    output:
-        set val(chrom), file("${chrom}.vcf") into combined
-
-    when params.combineByChromosome
-
-    script:
-    """
-    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
-        -T CombineGVCFs \
-        -V ${vcfs.join(' -V ')} \
-        -R $reference \
-        -o ${chrom}.vcf -L $chrom
-    """
-}
+        script:
+        """
+        bgzip $vcffile
+        tabix ${vcffile}.gz
+        """
+    }
 
 
-process bgZipCombinedGVCF {
-    tag "$chrom"
+    /* COMBINE GVCF
+    This needs to collect 150/200 samples from samples.list
+    Unsure how to get those
+    Script also runs one per chromosome it seems, could use each
+    */
 
-    input:
-        set val(chrom), file(combined_gvcf) from combined
-    output:
-        set val(chrom), file("${combined_gvcf}.gz"), file("*.gz.tbi") into compressed_comb_gvcf
+    compress_haplocalled.toList().transpose().toList().set { collect_haplovcfs }
 
-
-    """
-    bgzip $combined_gvcf
-    tabix ${combined_gvcf}.gz
-    """
-}
-
-
-genotyping.mix( compressed_comb_gvcf )
-          .map { it[0] instanceof List ? ['all', it[1], it[2]] : it }
-          .set { genotyping }
-
-
-process genotype {
-    tag "$key"
-
-    input:
-        set val(key), file(vcfs), file(ix_vcfs) from genotyping
-        set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
-    output:
-        set val(key), file("${key}_genotyping.vcf.gz"), file("${key}_genotyping.vcf.gz.tbi") into genotyped
+    gVCFCombine_ch = Channel.create()
+    genotyping = Channel.create()
+    if ( params.combineByChromosome ) {
+        collect_haplovcfs.set { gVCFCombine_ch }
+        genotyping.close()
+    }
+    else {
+        collect_haplovcfs.set { genotyping }
+        gVCFCombine_ch.close()
+    }
 
 
-    script:
-    """
-    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
-        -T GenotypeGVCFs \
-        -R $reference \
-        -V ${vcfs.join(' -V ')} \
-        -o ${key}_genotyping.vcf.gz
-    """
-}
+    process gVCFCombine {
+        tag "$chrom"
+
+        input:
+            set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
+            set val(key), file(vcfs), file(ix_vcfs) from gVCFCombine_ch
+            each chrom from chromosomes
+        output:
+            set val(chrom), file("${chrom}.vcf") into combined
+
+        when params.combineByChromosome
+
+        script:
+        """
+        java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
+            -T CombineGVCFs \
+            -V ${vcfs.join(' -V ')} \
+            -R $reference \
+            -o ${chrom}.vcf -L $chrom
+        """
+    }
 
 
-genotyped.toList().transpose().toList().set { comb_input }
+    process bgZipCombinedGVCF {
+        tag "$chrom"
+
+        input:
+            set val(chrom), file(combined_gvcf) from combined
+        output:
+            set val(chrom), file("${combined_gvcf}.gz"), file("*.gz.tbi") into compressed_comb_gvcf
 
 
-process combineChrVCFs {
-    input:
-        set val(keys), file(vcf), file(idx) from comb_input
-    output:
-        set val('all'), file('all.vcf.gz'), file('all.vcf.gz.tbi') into hardfilters
-
-    publishDir "${params.out}/genotype", mode: 'copy'
+        """
+        bgzip $combined_gvcf
+        tabix ${combined_gvcf}.gz
+        """
+    }
 
 
-    script:
-    """
-    java -Xmx23g -cp /usr/GenomeAnalysisTK.jar org.broadinstitute.gatk.tools.CatVariants \
-        -R $reference \
-        -V ${vcf.join(' -V ')} \
-        -out all.vcf.gz -assumeSorted
-    """
-}
+    genotyping.mix( compressed_comb_gvcf )
+              .map { it[0] instanceof List ? ['all', it[1], it[2]] : it }
+              .set { genotyping }
+
+
+    process genotype {
+        tag "$key"
+
+        input:
+            set val(key), file(vcfs), file(ix_vcfs) from genotyping
+            set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
+        output:
+            set val(key), file("${key}_genotyping.vcf.gz"), file("${key}_genotyping.vcf.gz.tbi") into genotyped
+
+
+        script:
+        """
+        java -Xmx7g -jar /usr/GenomeAnalysisTK.jar \
+            -T GenotypeGVCFs \
+            -R $reference \
+            -V ${vcfs.join(' -V ')} \
+            -o ${key}_genotyping.vcf.gz
+        """
+    }
+
+
+    genotyped.toList().transpose().toList().set { comb_input }
+
+
+    process combineChrVCFs {
+        input:
+            set val(keys), file(vcf), file(idx) from comb_input
+        output:
+            set val('all'), file('all.vcf.gz'), file('all.vcf.gz.tbi') into hardfilters
+
+        publishDir "${params.out}/genotype", mode: 'copy'
+
+
+        script:
+        """
+        java -Xmx23g -cp /usr/GenomeAnalysisTK.jar org.broadinstitute.gatk.tools.CatVariants \
+            -R $reference \
+            -V ${vcf.join(' -V ')} \
+            -out all.vcf.gz -assumeSorted
+        """
+    }
 
 
 
-hardfilters.into { hardfilters_snp; hardfilters_indel }
+    hardfilters.into { hardfilters_snp; hardfilters_indel }
 
 
-process hardfilters_snp {
-    input:
-        set val(key), file(vcf), file(index) from hardfilters_snp
-        set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
-    output:
-        set file('*SNP*vcf'), file('*filtered_snps*vcf')
+    process hardfilters_snp {
+        input:
+            set val(key), file(vcf), file(index) from hardfilters_snp
+            set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
+        output:
+            set file('*SNP*vcf'), file('*filtered_snps*vcf')
 
-    publishDir "${params.out}/genotype", mode: 'copy'
-
-
-    script:
-    """
-    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T SelectVariants -R $reference \
-        -V $vcf -selectType SNP -o ${key}_raw_SNP_1.vcf
-
-    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T VariantFiltration -R $reference -V ${key}_raw_SNP_1.vcf \
-        --filterExpression "QD < 2.0" --filterName "QD_less_than_2_filter" \
-        --filterExpression "FS > 60.0" --filterName "FS_greater_than_60_filter" \
-        --filterExpression "SOR > 3.0" --filterName "SOR_greater_than_3_filter" \
-        --filterExpression "MQ < 40.0" --filterName "MQ_less_than_40_filter" \
-        --filterExpression "MQRankSum < -12.5" --filterName "MQRankSum_less_than_-12.5_filter" \
-        --filterExpression "ReadPosRankSum < -8.0" --filterName "ReadPosRankSum_less_than_-8_filter" \
-        -o ${key}_filtered_snps_1.vcf \
-
-    vcftools --vcf ${key}_filtered_snps_1.vcf --keep-filtered PASS --out ${key}_pass_SNP_1 --remove-filtered-geno-all  \
-        --remove-filtered-all --recode --recode-INFO-all --maf 0.00001 --max-maf 0.99992
-     """
-}
+        publishDir "${params.out}/genotype", mode: 'copy'
 
 
-process hardfilters_indel {
-    input:
-        set val(key), file(vcf), file(index) from hardfilters_indel
-        set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
-    output:
-        set file('*INDEL*vcf'), file('*filtered_indels*vcf')
+        script:
+        """
+        java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T SelectVariants -R $reference \
+            -V $vcf -selectType SNP -o ${key}_raw_SNP_1.vcf
 
-    publishDir "${params.out}/genotype", mode: 'copy'
+        java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T VariantFiltration -R $reference -V ${key}_raw_SNP_1.vcf \
+            --filterExpression "QD < 2.0" --filterName "QD_less_than_2_filter" \
+            --filterExpression "FS > 60.0" --filterName "FS_greater_than_60_filter" \
+            --filterExpression "SOR > 3.0" --filterName "SOR_greater_than_3_filter" \
+            --filterExpression "MQ < 40.0" --filterName "MQ_less_than_40_filter" \
+            --filterExpression "MQRankSum < -12.5" --filterName "MQRankSum_less_than_-12.5_filter" \
+            --filterExpression "ReadPosRankSum < -8.0" --filterName "ReadPosRankSum_less_than_-8_filter" \
+            -o ${key}_filtered_snps_1.vcf \
+
+        vcftools --vcf ${key}_filtered_snps_1.vcf --keep-filtered PASS --out ${key}_pass_SNP_1 --remove-filtered-geno-all  \
+            --remove-filtered-all --recode --recode-INFO-all --maf 0.00001 --max-maf 0.99992
+         """
+    }
 
 
-    script:
-    """
-    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T SelectVariants -R $reference \
-        -V $vcf -selectType INDEL -o ${key}_raw_INDEL_1.vcf
+    process hardfilters_indel {
+        input:
+            set val(key), file(vcf), file(index) from hardfilters_indel
+            set file(reference), file(refindex), file(refdict) from Channel.value([reference, referenceFaIndex, referenceDict])
+        output:
+            set file('*INDEL*vcf'), file('*filtered_indels*vcf')
 
-    java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T VariantFiltration -R $reference -V ${key}_raw_INDEL_1.vcf \
-        --filterExpression "QD < 2.0" --filterName "QD_less_than_2_filter" \
-        --filterExpression "FS > 200.0" --filterName "FS_greater_than_60_filter" \
-        --filterExpression "SOR > 10.0" --filterName "SOR_greater_than_3_filter" \
-        --filterExpression "ReadPosRankSum < -20.0" --filterName "ReadPosRankSum_less_than_-8_filter" \
-        -o ${key}_filtered_indels_1.vcf
+        publishDir "${params.out}/genotype", mode: 'copy'
 
-    vcftools --vcf ${key}_filtered_indels_1.vcf  --keep-filtered PASS --out ${key}_pass_INDEL_1 --remove-filtered-geno-all  \
-        --remove-filtered-all --recode --recode-INFO-all --maf 0.00001 --max-maf 0.99992
-    """
+
+        script:
+        """
+        java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T SelectVariants -R $reference \
+            -V $vcf -selectType INDEL -o ${key}_raw_INDEL_1.vcf
+
+        java -Xmx7g -jar /usr/GenomeAnalysisTK.jar -T VariantFiltration -R $reference -V ${key}_raw_INDEL_1.vcf \
+            --filterExpression "QD < 2.0" --filterName "QD_less_than_2_filter" \
+            --filterExpression "FS > 200.0" --filterName "FS_greater_than_60_filter" \
+            --filterExpression "SOR > 10.0" --filterName "SOR_greater_than_3_filter" \
+            --filterExpression "ReadPosRankSum < -20.0" --filterName "ReadPosRankSum_less_than_-8_filter" \
+            -o ${key}_filtered_indels_1.vcf
+
+        vcftools --vcf ${key}_filtered_indels_1.vcf  --keep-filtered PASS --out ${key}_pass_INDEL_1 --remove-filtered-geno-all  \
+            --remove-filtered-all --recode --recode-INFO-all --maf 0.00001 --max-maf 0.99992
+        """
+    }
 }
 
 
