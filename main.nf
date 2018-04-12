@@ -349,9 +349,12 @@ process genotype {
 }
 
 
+genotyped.toList().transpose().toList().set { comb_input }
+
+
 process combineChrVCFs {
     input:
-        set val(keys), file(vcf), file(idx) from genotyped.toList().transpose().toList()
+        set val(keys), file(vcf), file(idx) from comb_input
     output:
         set val('all'), file('all.vcf.gz'), file('all.vcf.gz.tbi') into hardfilters
 
