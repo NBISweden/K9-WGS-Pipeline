@@ -5,7 +5,7 @@ if [ "$#" -lt 3 ];then
     cat >&2 <<END_USAGE
 Usage:
 
-    $0 <profile> <datadir> <type> [chromosomes]
+    $0 <profile> <datadir> <type> [chromosomes] [extra-args]
 
         profile: docker or singularity
         datadir: tiny or small
@@ -28,6 +28,7 @@ if [ ! -z "$4" ]; then
     CHROMOSOMES="--chromosomes $4"
 fi
 
+shift;shift;shift;shift
 
 FULLPATH=test-data/test-data-$DATADIR/
 OUT=out-${DATADIR}-${TYPE}
@@ -39,7 +40,8 @@ nextflow run main.nf \
     --${TYPE}Dir $FULLPATH \
     --reference  $FULLPATH/reference.fa \
     --known      $FULLPATH/known.bed \
-    --out        $OUT
+    --out        $OUT \
+    "$@"
 
 outbytes=$(cat $OUT/genotype/*{INDEL,SNP}*.vcf  | wc -c)
 
