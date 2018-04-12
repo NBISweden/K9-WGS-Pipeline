@@ -94,7 +94,6 @@ process gatk_realign {
         -T IndelRealigner \
         -targetIntervals name.intervals \
         -o ${key}.realigned.bam
-
     """
 }
 
@@ -283,6 +282,7 @@ else {
     gVCFCombine_ch.close()
 }
 
+
 process gVCFCombine {
     tag "$chrom"
 
@@ -292,7 +292,6 @@ process gVCFCombine {
         each chrom from chromosomes
     output:
         set val(chrom), file("${chrom}.vcf") into combined
-
 
     when params.combineByChromosome
 
@@ -359,6 +358,7 @@ process combineChrVCFs {
         set val('all'), file('all.vcf.gz'), file('all.vcf.gz.tbi') into hardfilters
 
     publishDir "${params.out}/genotype", mode: 'copy'
+
 
     script:
     """
