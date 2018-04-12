@@ -34,7 +34,7 @@ process fastqc {
     output:
         file "*fastqc.{html,zip}"
 
-    publishDir "${params.outdir}/report", mode: 'copy'
+    publishDir "${params.outdir}/reports", mode: 'copy'
 
 
     when: params.fastqDir
@@ -106,7 +106,7 @@ process mark_duplicates {
         set val(key), file("${key}.marked.bam"), file("${key}.marked.bai") into marked_reads
         file("*.metrics")
 
-    publishDir "${params.outdir}/report", mode: 'copy', saveAs: { it =~ /metrics$/ ? it : null }
+    publishDir "${params.outdir}/reports", mode: 'copy', saveAs: { it =~ /metrics$/ ? it : null }
 
 
     script:
@@ -136,7 +136,7 @@ process quality_recalibration {
 
     publishDir "${params.outdir}", mode: 'copy', saveAs: {
             type = it =~ /(ba(m|i))$/;
-            type ? "bam/${key}.${type[0][1]}" : "report/$it"
+            type ? "bam/${key}.${type[0][1]}" : "reports/$it"
         }
 
 
@@ -185,7 +185,7 @@ process flagstats {
     output:
         file("${key}.*stat*")
 
-    publishDir "${params.outdir}/report", mode: 'copy'
+    publishDir "${params.outdir}/reports", mode: 'copy'
 
 
     script:
@@ -205,7 +205,7 @@ process wgsmetrics {
     output:
         file("${key}.wgs_metrics")
 
-    publishDir "${params.outdir}/report", mode: 'copy'
+    publishDir "${params.outdir}/reports", mode: 'copy'
 
 
     script:
