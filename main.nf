@@ -198,6 +198,28 @@ process flagstats {
 }
 
 
+process wgsmetrics {
+    tag "$key"
+
+    input:
+        set val(key), file(bamfile), file(bamix) from recalibrated_bam_wgsmetrics
+        file reference
+    output:
+        file("${key}.wgs_metrics")
+
+    publishDir "${params.out}/report", mode: 'copy'
+
+
+    script:
+    """
+    picard CollectWgsMetrics \
+        R=$reference \
+        INPUT=$bamfile \
+        OUTPUT=${key}.wgs_metrics
+    """
+}
+
+
 process haplotypeCaller {
     tag "$key"
 
@@ -238,28 +260,6 @@ process haplotypeCallerCompress {
     """
     bgzip $vcffile
     tabix ${vcffile}.gz
-    """
-}
-
-
-process wgsmetrics {
-    tag "$key"
-
-    input:
-        set val(key), file(bamfile), file(bamix) from recalibrated_bam_wgsmetrics
-        file reference
-    output:
-        file("${key}.wgs_metrics")
-
-    publishDir "${params.out}/report", mode: 'copy'
-
-
-    script:
-    """
-    picard CollectWgsMetrics \
-        R=$reference \
-        INPUT=$bamfile \
-        OUTPUT=${key}.wgs_metrics
     """
 }
 
