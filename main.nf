@@ -454,6 +454,14 @@ def checkInputParams() {
         log.warn("You need to provide a file of known sites (--known)")
         fatal_error = true
     }
+    if ( params.onlyMap && !params.fastqDir ) {
+        log.warn("You need to specify --fastqDir when doing the mapping (--onlyMap)")
+        fatal_error = true
+    }
+    if ( params.onlyMap && params.bamDir ) {
+        log.warn("You need to specify --fastqDir not --bamDir when doing only doing the mapping (--onlyMap)")
+        fatal_error = true
+    }
 
     if (fatal_error) {
         log.warn "See --help for more information"
@@ -476,6 +484,8 @@ def usageMessage() {
            File with known sites for quality calibration.
         --out <dir>
            Directory for output files
+        --onlyMap
+           Only run the mapping steps
     """
 }
 
