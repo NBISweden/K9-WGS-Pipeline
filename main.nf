@@ -11,7 +11,6 @@ referenceBwaIndex = file("${reference}.{amb,ann,bwt,pac,sa}")
 referenceFaIndex  = file("${reference}.fai")
 referenceDict     = file("${refdir}/${reference.getBaseName()}.dict")
 known             = file(params.known)
-outdir            = params.out
 
 chromosomes = params.chromosomes.split(',').collect { it.trim() }
 
@@ -35,7 +34,7 @@ process fastqc {
     output:
         file "*fastqc.{html,zip}"
 
-    publishDir "${params.out}/report", mode: 'copy'
+    publishDir "${params.outdir}/report", mode: 'copy'
 
 
     when: params.fastqDir
@@ -107,7 +106,7 @@ process mark_duplicates {
         set val(key), file("${key}.marked.bam"), file("${key}.marked.bai") into marked_reads
         file("*.metrics")
 
-    publishDir "${params.out}/report", mode: 'copy', saveAs: { it =~ /metrics$/ ? it : null }
+    publishDir "${params.outdir}/report", mode: 'copy', saveAs: { it =~ /metrics$/ ? it : null }
 
 
     script:
@@ -135,7 +134,7 @@ process quality_recalibration {
         file("${key}.*recal_data.table")
         set val(key), file("${key}.recalibrated.bam"), file("${key}.recalibrated.bai") into recalibrated_bam
 
-    publishDir "${params.out}", mode: 'copy', saveAs: {
+    publishDir "${params.outdir}", mode: 'copy', saveAs: {
             type = it =~ /(ba(m|i))$/;
             type ? "bam/${key}.${type[0][1]}" : "report/$it"
         }
@@ -186,7 +185,7 @@ process flagstats {
     output:
         file("${key}.*stat*")
 
-    publishDir "${params.out}/report", mode: 'copy'
+    publishDir "${params.outdir}/report", mode: 'copy'
 
 
     script:
@@ -206,7 +205,7 @@ process wgsmetrics {
     output:
         file("${key}.wgs_metrics")
 
-    publishDir "${params.out}/report", mode: 'copy'
+    publishDir "${params.outdir}/report", mode: 'copy'
 
 
     script:
@@ -253,7 +252,7 @@ if ( !params.onlyMap ) {
         output:
             set val(key), file("${key}.g.vcf.gz"), file("${key}.g.vcf.gz.tbi") into compress_haplocalled
 
-        publishDir "${params.out}/haplotypeCaller", mode: 'copy'
+        publishDir "${params.outdir}/haplotypeCaller", mode: 'copy'
 
 
         script:
@@ -358,7 +357,7 @@ if ( !params.onlyMap ) {
         output:
             set val('all'), file('all.vcf.gz'), file('all.vcf.gz.tbi') into hardfilters
 
-        publishDir "${params.out}/genotype", mode: 'copy'
+        publishDir "${params.outdir}/genotype", mode: 'copy'
 
 
         script:
@@ -382,7 +381,7 @@ if ( !params.onlyMap ) {
         output:
             set file('*SNP*vcf'), file('*filtered_snps*vcf')
 
-        publishDir "${params.out}/genotype", mode: 'copy'
+        publishDir "${params.outdir}/genotype", mode: 'copy'
 
 
         script:
@@ -412,7 +411,7 @@ if ( !params.onlyMap ) {
         output:
             set file('*INDEL*vcf'), file('*filtered_indels*vcf')
 
-        publishDir "${params.out}/genotype", mode: 'copy'
+        publishDir "${params.outdir}/genotype", mode: 'copy'
 
 
         script:
@@ -482,7 +481,7 @@ def usageMessage() {
            Genome reference file (has to be indexed)
         --known <file>
            File with known sites for quality calibration.
-        --out <dir>
+        --outdir <dir>
            Directory for output files
         --onlyMap
            Only run the mapping steps
@@ -493,7 +492,7 @@ def infoMessage() {
     log.info """\
 *** K9 WGS Pipeline ***
 Configuration environemnt:
-    Out directory:   $params.out
+    Out directory:   $params.outdir
     Fastq directory: $params.fastqDir
     Bam directory:   $params.bamDir
     Reference:       $params.reference

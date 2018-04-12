@@ -40,7 +40,7 @@ nextflow run main.nf \
     --${TYPE}Dir $FULLPATH \
     --reference  $FULLPATH/reference.fa \
     --known      $FULLPATH/known.bed \
-    --out        $OUT \
+    --outdir     $OUT \
     "$@"
 
 outbytes=$(cat $OUT/genotype/*{INDEL,SNP}*.vcf  | wc -c)
