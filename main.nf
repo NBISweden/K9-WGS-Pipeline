@@ -14,7 +14,7 @@ known             = file(params.known)
 
 chromosomes = params.chromosomes.split(',').collect { it.trim() }
 
-fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}.fq.gz')
+fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}*.f*q.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
 
 bamFiles = Channel.fromPath(params.bamDir + '*.bam')
