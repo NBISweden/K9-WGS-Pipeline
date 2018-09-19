@@ -56,13 +56,18 @@ process bwa {
         set val(key), file("${key}.bam"), file("${key}.bam.bai") into mapped_reads
 
 
+    // errorStrategy 'ignore'
+
+    publishDir "${params.outdir}/bam-temp"
+
     when: params.fastqDir && ! params.bamDir
 
     script:
     readGroup = "@RG\\tID:$key\\tSM:$key\\tPL:ILLUMINA"
     """
-    bwa mem -t $task.cpus -M -R \'$readGroup\' $reference $fastqs |
-        samtools sort --threads $task.cpus -m 4G > ${key}.bam
+    bwa mem -t $task.cpus -M -R \'$readGroup\' $reference $fastqs > temp.sam
+
+    samtools sort --threads $task.cpus -m ${params.singleCPUMem.toMega() - 1500}M < temp.sam > ${key}.bam
     samtools index ${key}.bam
     """
 }
@@ -80,14 +85,15 @@ process gatk_realign {
 
     script:
     """
-    ls
-    java -jar /usr/GenomeAnalysisTK.jar \
+    java -Xmx${task.memory.toMega() - 500}m \
+        -jar /usr/GenomeAnalysisTK.jar \
         -I $bamfile \
         -R $reference \
         -T RealignerTargetCreator \
         -o name.intervals
 
-    java -jar /usr/GenomeAnalysisTK.jar \
+    java -Xmx${task.memory.toMega() - 500}m \
+        -jar /usr/GenomeAnalysisTK.jar \
         -I $bamfile \
         -R $reference \
         -T IndelRealigner \
@@ -111,14 +117,13 @@ process mark_duplicates {
 
     script:
     """
-    picard MarkDuplicates \
-        INPUT=$bamfile \
+    picard -Xmx${task.memory.toMega() - 500}m \
+        MarkDuplicates \
+        INPUT=${bamfile} \
         OUTPUT=${key}.marked.bam \
         METRICS_FILE=${key}.marked.metrics \
-        VALIDATION_STRINGENCY=LENIENT
-
-    picard BuildBamIndex \
-        INPUT=${key}.marked.bam \
+        TMP_DIR=. \
+        CREATE_INDEX=TRUE \
         VALIDATION_STRINGENCY=LENIENT
     """
 }
