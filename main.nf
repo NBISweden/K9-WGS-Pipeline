@@ -479,6 +479,8 @@ def usageMessage() {
     Usage:
         nextflow run main.nf --fastqDir <directory>
     Options:
+        --help
+           Print this help message
         --fastqDir <Dir>
            Directory containing fastq samples (.fq.gz)
         --bamDir <Dir>
