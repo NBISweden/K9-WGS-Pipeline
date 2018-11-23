@@ -86,14 +86,14 @@ process gatk_realign {
 
     script:
     """
-    java -Xmx${task.memory.toMega() - 500}m \
+    java -Xmx${params.singleCPUMem.toMega() - 500}m \
         -jar /usr/GenomeAnalysisTK.jar \
         -I $bamfile \
         -R $reference \
         -T RealignerTargetCreator \
         -o name.intervals
 
-    java -Xmx${task.memory.toMega() - 500}m \
+    java -Xmx${params.singleCPUMem.toMega() - 500}m \
         -jar /usr/GenomeAnalysisTK.jar \
         -I $bamfile \
         -R $reference \
@@ -118,7 +118,7 @@ process mark_duplicates {
 
     script:
     """
-    picard -Xmx${task.memory.toMega() - 500}m \
+    picard -Xmx${params.singleCPUMem() - 500}m \
         MarkDuplicates \
         INPUT=${bamfile} \
         OUTPUT=${key}.marked.bam \
