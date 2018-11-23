@@ -1,9 +1,14 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-# NBISweden-K9-WGS-Pipeline-bwa-0.7.12.img
+DIR=singularity
+mkdir $DIR
+
 for IMG in $( cat conf/singularity.config | grep shub | awk '{print $NF}' ); do
     IMG=$( echo $IMG | sed 's/"//g')
     STORE=$( echo $IMG | sed 's.shub://..;s./.-.g;s.:.-.g;s/$/.img/' )
+    if [ -f "$DIR/$STORE" ]; then
+        continue
+    fi
     echo $STORE
-    singularity pull --name "$STORE" "$IMG"
+    singularity pull --name "$DIR/$STORE" "$IMG"
 done
