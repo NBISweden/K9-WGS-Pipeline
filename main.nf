@@ -17,11 +17,11 @@ chromosomes = params.chromosomes.split(',').collect { it.trim() }
 fastqFiles = Channel.fromFilePairs(params.fastqDir + '/*R{1,2}*.f*q.gz')
 fastqFiles.into { fastq_qc; fastq_bwa }
 
-bamFiles = Channel.fromPath(params.bamDir + '*.bam')
+bdir = params.bamDir + '/*.bam'
+bamFiles = Channel.fromPath(bdir)
 bamFiles
   .map { [it.baseName, it, infer_bam_index_from_bam(it)] }
   .set { readyBamFiles }
-
 
 infoMessage()
 
@@ -67,7 +67,8 @@ process bwa {
     """
     bwa mem -t $task.cpus -M -R \'$readGroup\' $reference $fastqs > temp.sam
 
-    samtools sort --threads $task.cpus -m ${params.singleCPUMem.toMega() - 1500}M < temp.sam > ${key}.bam
+    samtools sort --threads ${task.cpus - 2} -m ${params.singleCPUMem.toMega() - 1000}M < temp.sam > ${key}.bam
+
     samtools index ${key}.bam
     """
 }
@@ -490,6 +491,8 @@ def usageMessage() {
            Directory for output files
         --onlyMap
            Only run the mapping steps
+        --project
+           Slurm project to run with
     """
 }
 
