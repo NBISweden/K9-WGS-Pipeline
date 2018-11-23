@@ -15,7 +15,27 @@ Vagrant.configure("2") do |config|
     apt-get -y install build-essential curl git sudo man vim autoconf libtool \
         python-minimal python3 openjdk-8-jre linux-image-extra-$(uname -r) \
         linux-image-extra-virtual apt-transport-https ca-certificates \
-        software-properties-common
+        software-properties-common libssl-dev uuid-dev libgpgme11-dev \
+        squashfs-tools libseccomp-dev pkg-config
+
+    # Go
+    export VERSION=1.11 OS=linux ARCH=amd64
+    cd /tmp
+    wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz >/dev/null 2>&1
+    sudo tar -C /usr/local -xzf go$VERSION.$OS-$ARCH.tar.gz
+    export GOPATH=${HOME}/go
+    export PATH=/usr/local/go/bin:${PATH}:${GOPATH}/bin
+
+    # Singularity
+    mkdir -p $GOPATH/src/github.com/sylabs
+    cd $GOPATH/src/github.com/sylabs
+    git clone https://github.com/sylabs/singularity.git >/dev/null 2>&1
+	cd singularity
+	./mconfig
+	cd ./builddir
+	make
+	sudo make install
+
 
     # Singularity
     git clone https://github.com/singularityware/singularity.git
@@ -27,7 +47,7 @@ Vagrant.configure("2") do |config|
     cd ..
 
     # Nextflow
-    curl -s https://get.nextflow.io | bash
+    curl -s https://get.nextflow.io 2>/dev/null | bash
     mkdir -p /home/ubuntu/bin
     mv nextflow /home/ubuntu/bin
     chown -R ubuntu:ubuntu /home/ubuntu/bin
@@ -35,7 +55,7 @@ Vagrant.configure("2") do |config|
     su ubuntu -c /home/ubuntu/bin/nextflow # Downloads all dependencies
 
     # Docker
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg 2>/dev/null | sudo apt-key add -
     sudo add-apt-repository \
         "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
         $(lsb_release -cs) \
