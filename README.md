@@ -1,14 +1,22 @@
 # K9-WGS-Pipeline
 [![Travis status][travis-badge]][travis-link]
 
-Nextflow pipeline for standardised mapping and variant calls on canine genomes
+Nextflow pipeline for standardised mapping and variant calls on canine genomes.
+The pipeline take fastqs (or bams) and outputs, bams, and gvcfs for joint
+genotyping, followed by hard filtering.
+
 
 ## Usage
 
 ```bash
+# nextflow run main.nf --help
+N E X T F L O W  ~  version 0.31.1
+Launching `main.nf` [shrivelled_fermi] - revision: 131a72393f
     Usage:
         nextflow run main.nf --fastqDir <directory>
     Options:
+        --help
+           Print this help message
         --fastqDir <Dir>
            Directory containing fastq samples (.fq.gz)
         --bamDir <Dir>
@@ -16,15 +24,64 @@ Nextflow pipeline for standardised mapping and variant calls on canine genomes
         --reference <file>
            Genome reference file (has to be indexed)
         --known <file>
-           Bed file with known sites for quality calibration.
+           File with known sites for quality calibration.
         --outdir <dir>
            Directory for output files
         --onlyMap
            Only run the mapping steps
+        --project
+           Slurm project to run with
 ```
 
 
+## Installation
+
+
+The recommended way is to clone it from github:
+
+```bash
+# git clone https://github.com/NBISweden/K9-WGS-Pipeline.git
+# cd K9-WGS-Pipeline
+```
+
+
+## Prerequisites
+
+### Software
+
+The pipeline requires [nextflow](https://www.nextflow.io/) and
+[singularity](https://www.sylabs.io/singularity/) on the target system. These
+are often pre-installed on HPC systems.
+
+It is recommended that you pre-pull all the singularity images required by the
+workflow, there is a script in the workflow directory to help you with this,
+just run:
+
+```bash
+# scripts/pull_singularity.sh
+```
+
+### Data
+
+The pipeline requries a `bwa` indexed reference genome and a `picard` genomic
+dictionary. These can be created like this:
+
+```bash
+# bwa index ref.fasta
+# java -Xmx4g /picard/CreateSequenceDictionary.jar REFERENCE=ref.fasta OUTPUT=ref.dict
+```
+
+You can also do this directly through the prepulled singularity images like so:
+
+```bash
+# singularity exec singularity/NBISweden-K9-WGS-Pipeline-bwa-0.7.12.img \
+      bwa index ref.fasta
+# singularity exec singularity/NBISweden-K9-WGS-Pipeline-picard-2.10.6.img \
+      picard CreateSequenceDictionary REFERENCE=ref.fasta OUTPUT=ref.dict
+```
+
 ## How to run
+
 
 ```
 # nextflow run main.nf <options>
@@ -45,6 +102,8 @@ If specifying `onlyMap` no genotyping will be done.
 
 If you already have created your mapping you can use `--bamDir` instead of
 `--fastqDir` to specify a directory with bam files to run from.
+
+### Running on HPC
 
 ## Output
 
@@ -95,9 +154,12 @@ information on how the mapping went.
 
 ## Run on test data
 
+First setup the testdata with `scripts/setup_testdata.sh` and then you can run
+tests with the `scripts/test-one.sh` script.
+
 ```bash
-$ scripts/setup_testdata.sh
-$ scripts/test-one.sh singularity tiny fastq chr38
+# scripts/setup_testdata.sh
+# scripts/test-one.sh singularity tiny fastq chr38
 ```
 
 The `test-one.sh` script is mostly for testing on travis but it is very
