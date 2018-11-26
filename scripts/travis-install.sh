@@ -15,12 +15,15 @@ if [ ! -z "$SGT_VER" ]; then
         pkg-config # squashfs-tools libseccomp-dev
 
 
+    echo "Installing GO"
     export VERSION=1.11 OS=linux ARCH=amd64
     cd /tmp
     wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz >/dev/null 2>&1
     sudo tar -C /usr/local -xzf go$VERSION.$OS-$ARCH.tar.gz
     export GOPATH=${HOME}/go
     export PATH=/usr/local/go/bin:${PATH}:${GOPATH}/bin
+    echo "FULL PATH VARIABLE:"
+    echo $PATH | tr ':' "\n"
 
     mkdir -p $GOPATH/src/github.com/sylabs
     cd $GOPATH/src/github.com/sylabs
