@@ -37,15 +37,6 @@ Vagrant.configure("2") do |config|
 	sudo make install
 
 
-    # Singularity
-    git clone https://github.com/singularityware/singularity.git
-    cd singularity
-    ./autogen.sh
-    ./configure --prefix=/usr/local
-    make
-    make install
-    cd ..
-
     # Nextflow
     curl -s https://get.nextflow.io 2>/dev/null | bash
     mkdir -p /home/ubuntu/bin
