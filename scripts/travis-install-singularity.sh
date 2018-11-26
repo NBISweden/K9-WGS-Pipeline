@@ -17,18 +17,6 @@ sudo apt-get update && sudo apt-get install -y wget git \
                                                     uuid-dev \
                                                     libssl-dev
 
-
-sudo sed -i -e 's/^Defaults\tsecure_path.*$//' /etc/sudoers
-
-# Check Python
-
-echo "Python Version:"
-python --version
-pip install sregistry[all]
-sregistry version
-
-echo "sregistry Version:"
-
 # Install Singularity
 
 cd /tmp && \
