@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ ! -z "$FAKE" ]; then
+    echo "FAKE!!"
+    exit 1
+fi
+
 echo "INSTALL DEPS"
 sudo apt-get install squashfs-tools
 if ! ./scripts/travis-install.sh; then
