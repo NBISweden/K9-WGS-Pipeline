@@ -11,13 +11,9 @@ env:
   global:
     - secure: "IGhtZ7tVaR/E63BdnRCYpUxQVrlpX1bM3glByOAuxcG/GA20+4ezig8dJzd7q+qttTMca/pcqO9WZrGQL0d9uQvNmkisam1hg6YWDMh3y0Ec5xa/Gd3R2yTygZNST36Qxsn8hKdzk7awJgni08Y5HQTAO7AsFXy0CvVigC3kP9G6WvJh7SHV8mQo4rjqrlBfEeLngof3/u+yHOtW3hPpGeS3/bOtX5cU3z+lNLiV97FxH62MPn3YbH9Ku9YKu5qhd53+rtTE/PRbdzFc8RvYBksSp193s0yhnwkkS97ko4RSowPbbVIf4/VFn0ct4YAJ1+5mULcftbsOKXPSx70lKN7l4EyFwtewAMc16l20HmOlgL+X9VkzGDfFJlfF8FAu1mhSDa9xKXWxhlt1O3TSBuE+gj7EEPZ4Zd6R3AD6qxGBfmSfO2UdaPjvlcoDskpasA9m8StuAgDe18/r061o9wBy0WCNw01U74JUY8+0exao2t1J8nrDAxpYFTAJ112CnzxfZFQHscYJx6HOIIxdzsJhybLobuKoFvd+zvkNLziP/a0qk8/3h/EFY34el5oIBUKd7KKl1rJqYeZ8okvHjxIA6EmtEv6CE0UR1xOzd197WqduZPlBVHYY0acAYlBQ9dZGwNMiXMFE9PPQWVVx+Nn9+lbxey2qEsT4dIC3IDQ="
   matrix:
-    - NXF_VER=0.31.1     PROFILE=singularity SGT_VER=v3.0.1
+    - NXF_VER=0.31.1     PROFILE=singularity SGT_VER=2.6.0
 
-matrix:
-  allow_failures:
-    - env: NXF_VER=0.28.0     PROFILE=docker      SGT_VER=2.4.2
-
-script: ./scripts/travis-install-test.sh
+script: ./scripts/travis-runner.sh
 
 jobs:
   include:
