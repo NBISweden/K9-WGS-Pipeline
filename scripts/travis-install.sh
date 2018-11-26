@@ -6,26 +6,30 @@ curl -fsSL https://get.nextflow.io | bash
 chmod +x nextflow
 sudo mv nextflow /usr/local/bin/
 
-singularity_url() {
-    if [ "$SGT_VER" == "3.0.1" ]; then
-        echo "https://github.com/sylabs/singularity/releases/download/v3.0.1/singularity-3.0.1.tar.gz"
-    elif [ "$SGT_VER" == "3.0.0" ]; then
-        echo "https://github.com/sylabs/singularity/releases/download/v3.0.0/singularity-v3.0.0.tar.gz"
-    else
-        echo "https://github.com/singularityware/singularity/releases/download/$SGT_VER/singularity-$SGT_VER.tar.gz"
-    fi
-}
-
 # Install Singularity, if needed
 if [ ! -z "$SGT_VER" ]; then
-    cd $HOME
-    URL=$(singularity_url)
-    wget "$URL"
-    tar xvf singularity-*$SGT_VER.tar.gz # * since sometimes there's a v, sometimes not...
-    cd singularity-$SGT_VER
-    ./configure --prefix=/usr/local
-    make
-    sudo make install
-    cd ..
-    rm -rf singularity-$SGT_VER*
+    sudo apt-get -y install build-essential curl git sudo man vim autoconf libtool \
+        python-minimal python3 openjdk-8-jre linux-image-extra-$(uname -r) \
+        linux-image-extra-virtual apt-transport-https ca-certificates \
+        software-properties-common libssl-dev uuid-dev libgpgme11-dev \
+        squashfs-tools libseccomp-dev pkg-config
+
+    export VERSION=1.11 OS=linux ARCH=amd64
+    cd /tmp
+    wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz >/dev/null 2>&1
+    sudo tar -C /usr/local -xzf go$VERSION.$OS-$ARCH.tar.gz
+    export GOPATH=${HOME}/go
+    export PATH=/usr/local/go/bin:${PATH}:${GOPATH}/bin
+
+    mkdir -p $GOPATH/src/github.com/sylabs
+    cd $GOPATH/src/github.com/sylabs
+    #git clone https://github.com/sylabs/singularity.git >/dev/null 2>&1
+    git clone https://github.com/sylabs/singularity.git
+	cd singularity
+    git checkout "$SGT_VER"
+
+	./mconfig
+	cd ./builddir
+	make
+	sudo make install
 fi
