@@ -5,6 +5,7 @@ set -e
 if [ "$TRAVIS_BRANCH" != "develop" -o "$TRAVIS_PULL_REQUEST" != "false" ]; then
     exit 0;
 fi
+exit 0
 
 git config user.email "johan.viklund@nbis.se"
 git config user.name "Travis CI"
