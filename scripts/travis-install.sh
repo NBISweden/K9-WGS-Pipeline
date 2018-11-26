@@ -12,7 +12,8 @@ if [ ! -z "$SGT_VER" ]; then
         python-minimal python3 openjdk-8-jre linux-image-extra-$(uname -r) \
         linux-image-extra-virtual apt-transport-https ca-certificates \
         software-properties-common libssl-dev uuid-dev libgpgme11-dev \
-        squashfs-tools libseccomp-dev pkg-config
+        pkg-config # squashfs-tools libseccomp-dev
+
 
     export VERSION=1.11 OS=linux ARCH=amd64
     cd /tmp
