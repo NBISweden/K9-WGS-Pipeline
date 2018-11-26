@@ -2,11 +2,20 @@
 
 echo "INSTALL DEPS"
 sudo apt-get install squashfs-tools
-./scripts/travis-install.sh
+if ! ./scripts/travis-install.sh; then
+    echo "Failed in install"
+    exit 1;
+fi
 
 echo "SETUP TEST DATA"
-./scripts/setup_testdata.sh
+if ! ./scripts/setup_testdata.sh; then
+    echo "Failed to setup test data"
+    exit 1;
+fi
 
 echo "RUN TRAVIS TEST"
-./scripts/travis-test.sh
+if ! ./scripts/travis-test.sh; then
+    echo "Test failure"
+    exit 1
+fi
 
