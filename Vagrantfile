@@ -10,6 +10,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
+    export MAKEFLAGS=-j8
     # Dependencies
     apt-get update
     apt-get -y install build-essential curl git sudo man vim autoconf libtool \
