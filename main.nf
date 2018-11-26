@@ -118,7 +118,7 @@ process mark_duplicates {
 
     script:
     """
-    picard -Xmx${params.singleCPUMem() - 500}m \
+    picard -Xmx${params.singleCPUMem - 500}m \
         MarkDuplicates \
         INPUT=${bamfile} \
         OUTPUT=${key}.marked.bam \
