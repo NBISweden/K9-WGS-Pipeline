@@ -11,8 +11,8 @@ if [ ! -z "$SGT_VER" ]; then
     sudo apt-get -y install build-essential curl git sudo man vim autoconf libtool \
         python-minimal python3 openjdk-8-jre linux-image-extra-$(uname -r) \
         linux-image-extra-virtual apt-transport-https ca-certificates \
-        software-properties-common libssl-dev uuid-dev libgpgme11-dev \
-        pkg-config # squashfs-tools libseccomp-dev
+        software-properties-common libssl-dev uuid-dev  \
+        pkg-config # squashfs-tools libseccomp-dev libgpgme11-dev
 
 
     echo "Installing GO"
@@ -24,6 +24,9 @@ if [ ! -z "$SGT_VER" ]; then
     export PATH=/usr/local/go/bin:${PATH}:${GOPATH}/bin
     echo "FULL PATH VARIABLE:"
     echo $PATH | tr ':' "\n"
+
+    echo "Checking go version!"
+    go version
 
     mkdir -p $GOPATH/src/github.com/sylabs
     cd $GOPATH/src/github.com/sylabs
