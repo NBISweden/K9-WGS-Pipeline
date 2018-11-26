@@ -18,9 +18,8 @@ sudo apt-get update && sudo apt-get install -y wget git \
                                                     libssl-dev
 
 # Install Singularity
-
 cd /tmp && \
-    git clone -b vault/release-2.5 https://www.github.com/sylabs/singularity.git
+    git clone -b "$SGT_VER" https://www.github.com/sylabs/singularity.git
     cd singularity && \
     ./autogen.sh && \
     ./configure --prefix=/usr/local && \
