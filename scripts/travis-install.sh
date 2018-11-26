@@ -19,7 +19,7 @@ singularity_url() {
 # Install Singularity, if needed
 if [ ! -z "$SGT_VER" ]; then
     cd $HOME
-    URL=singularity_url
+    URL=$(singularity_url)
     wget "$URL"
     tar xvf singularity-*$SGT_VER.tar.gz # * since sometimes there's a v, sometimes not...
     cd singularity-$SGT_VER
