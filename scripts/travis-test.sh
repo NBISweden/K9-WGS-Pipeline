@@ -18,7 +18,7 @@ FAIL=0
 
 for D in tiny small; do
     C=$(chrom_for $D)
-    for T in bam fastq; do
+    for T in fastq bam; do
         if ! ./scripts/test-one.sh $PROFILE $D $T $C; then
             echo "FAIL: $PROFILE $D $T"
             FAIL=1
