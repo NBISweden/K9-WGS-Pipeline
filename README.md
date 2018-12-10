@@ -61,6 +61,10 @@ just run:
 # scripts/pull_singularity.sh
 ```
 
+**NB**: You need to set the environment variable `NXF_SINGULARITY_CACHEDIR` to
+the location where the images where pulled (it's the `singularity` subdir from
+where you ran the `pull_singularity.sh` script).
+
 ### Data
 
 The pipeline requries a `bwa` indexed reference genome and a `picard` genomic
@@ -84,7 +88,7 @@ You can also do this directly through the prepulled singularity images like so:
 
 
 ```
-# nextflow run main.nf <options>
+# nextflow run [-resume] main.nf <options>
 ```
 
 When running the mapping the workflow expects a `--fastqDir <dir>` parameter on
@@ -103,7 +107,81 @@ If specifying `onlyMap` no genotyping will be done.
 If you already have created your mapping you can use `--bamDir` instead of
 `--fastqDir` to specify a directory with bam files to run from.
 
+It is generally recommended to start it with the `-resume` option so a failed
+run can be resumed from where it failed once eventual errors are fixed.
+
+
 ### Running on HPC
+
+For HPC systems there are two main ways of running the pipeline
+
+#### Run as a singlenode job
+
+Put the nextflow command in a shellscript. Apart from the standard options make
+sure to run nextflow with the `-profile rackhamNode` switch, by default this
+profile assumes that one node has 20 cpu cores, if you want to change this edit
+the `conf/rackhamNode.config` file and update the `cpus` parameter on line 16
+and 24, also update the memory parameters so they match the local environment.
+Example run:
+
+`run-pipeline.sh`:
+```bash
+#!/bin/sh
+
+export NXF_LAUNCHER=$SNIC_TMP    # For Rackham
+export NXF_TEMP=$SNIC_TMP        # For Rachham
+export NXF_SINGULARITY_CACHEDIR=/home/user/.../singularity
+
+nextflow run -resume -profile rackhamNode main.nf <project specific stuff>
+```
+
+And then start it with
+
+```bash
+$ sbatch run-pipeline.sh
+```
+
+#### Let nextflow handle the queueing system
+
+This is similar to the above, but instead you should use the `-profile rackham`
+option (edit the file `conf/rackham.config` if you want to change settings to
+adjust it to your local cluster). Remember to specify the `--project` parameter
+to the workflow.
+
+Since this is a very long running pipeline it is recommended that you run the
+pipeline in a [`screen`](https://www.gnu.org/software/screen/) session so you
+can log out of the HPC system and log back in again and check on the status of
+the run.
+
+This is an example of how to do it:
+
+`run-pipeline.sh`:
+```bash
+#!/bin/sh
+
+export NXF_LAUNCHER=$SNIC_TMP    # For Rackham
+export NXF_TEMP=$SNIC_TMP        # For Rachham
+export NXF_SINGULARITY_CACHEDIR=/home/user/.../singularity
+
+nextflow run -resume -profile rackham main.nf --project <slurm project> <more params>
+```
+
+And then in the terminal
+
+```bash
+$ screen
+$ ./run-pipeline.sh
+```
+
+Then to disconnect the screen session type `Ctrl-A D`, then you can safely log
+out. The next time you log in, on the same login node, run:
+
+```bash
+$ screen -r
+```
+
+To reconnect.
+
 
 ## Output
 

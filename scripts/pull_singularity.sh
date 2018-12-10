@@ -3,6 +3,8 @@
 DIR=singularity
 mkdir $DIR
 
+echo "Will store singularity images in $DIR"
+
 for IMG in $( cat conf/singularity.config | grep shub | awk '{print $NF}' ); do
     IMG=$( echo $IMG | sed 's/"//g')
     STORE=$( echo $IMG | sed 's.shub://..;s./.-.g;s.:.-.g;s/$/.img/' )
