@@ -1,9 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 # Only auto merge develop branch
-if [ "$TRAVIS_BRANCH" != "develop" -o "$TRAVIS_PULL_REQUEST" != "false" ]; then
-    exit 0;
+if [ "$TRAVIS_BRANCH"       != "develop" ] ||
+   [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+    exit 0
 fi
 
 git config user.email "johan.viklund@nbis.se"

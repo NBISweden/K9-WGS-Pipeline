@@ -5,29 +5,30 @@ singularity pull --name picard.simg shub://NBISweden/K9-WGS-Pipeline:picard-1.97
 
 wait
 
-for DIR in test-data/*; do
-    if [ ! -d "$DIR" ]; then
-        continue
-    fi
+shopt -s nullglob
 
-    cd $DIR
-    echo "Processing $DIR"
+for dirpath in test-data/*/; do
+    cd "$dirpath" || exit 1
+    printf 'Processing "%s"\n' "$dirpath"
 
-    GENOME_REFERENCE=(reference*.fa)
+    for genome_reference in reference*.fa; do
+        singularity exec ../../bwa.simg bwa index "$genome_reference"
+        singularity exec ../../bwa.simg samtools faidx "$genome_reference"
 
-    singularity exec ../../bwa.simg bwa index $GENOME_REFERENCE
-    singularity exec ../../bwa.simg samtools faidx $GENOME_REFERENCE
-
-    singularity exec ../../picard.simg picard CreateSequenceDictionary.jar \
-        R=$GENOME_REFERENCE \
-        O=${GENOME_REFERENCE/%.fa/.dict} || echo "Picard fail"
-
-    for BAMFILE in *.bam; do
-        singularity exec ../../bwa.simg samtools index "$BAMFILE"
+        if ! singularity exec ../../picard.simg picard CreateSequenceDictionary.jar \
+            R="$genome_reference" \
+            O="${genome_reference%.fa}.dict"
+        then
+             printf 'Picard fail for "%s"\n' "$genome_reference" >&2
+        fi
     done
 
-    cd ../..
+    for bamfile in *.bam; do
+        singularity exec ../../bwa.simg samtools index "$bamfile"
+    done
+
+    cd "$OLDPWD"
 done
 
-rm bwa.simg
-rm picard.simg
+rm -f bwa.simg
+rm -f picard.simg

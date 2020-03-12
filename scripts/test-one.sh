@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -x
 
 if [ "$#" -lt 3 ];then
@@ -22,29 +22,29 @@ fi
 PROFILE=$1
 DATADIR=$2
 TYPE=$3
-CHROMOSOMES=""
+CHROMOSOMES=()
 
 if [ ! -z "$4" ]; then
-    CHROMOSOMES="--chromosomes $4"
+    CHROMOSOMES=(--chromosomes "$4")
 fi
 
-shift;shift;shift;shift
+shift 4
 
 FULLPATH=test-data/test-data-$DATADIR/
-OUT=out-${DATADIR}-${TYPE}
+OUT=out-$DATADIR-$TYPE
 
 nextflow run main.nf \
-    -profile $PROFILE \
+    -profile "$PROFILE" \
     --verbose \
-    $CHROMOSOMES \
-    --${TYPE}Dir $FULLPATH \
-    --reference  $FULLPATH/reference.fa \
-    --known      $FULLPATH/known.bed \
-    --outdir     $OUT \
+    "${CHROMOSOMES[@]}" \
+    --"${TYPE}Dir" "$FULLPATH" \
+    --reference    "$FULLPATH"/reference.fa \
+    --known        "$FULLPATH"/known.bed \
+    --outdir       "$OUT" \
     "$@"
 
-outbytes=$(cat $OUT/genotype/*{INDEL,SNP}*.vcf  | wc -c)
+outbytes=$(cat "$OUT"/genotype/*{INDEL,SNP}*.vcf  | wc -c)
 
-if [ $outbytes -lt 1000 ]; then
+if [ "$outbytes" -lt 1000 ]; then
     exit 1
 fi

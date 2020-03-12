@@ -5,7 +5,6 @@ if [ -z "$SGT_VER" ]; then
     exit 0
 fi
 
-
 sudo apt-get update && sudo apt-get install -y wget git \
                                                     build-essential \
                                                     squashfs-tools \
