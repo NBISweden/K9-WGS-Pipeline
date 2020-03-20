@@ -1,16 +1,19 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-DIR=singularity
-mkdir $DIR
+dirpath=singularity
+if ! mkdir -p "$dirpath"; then
+    printf 'Could not create directory "%s"\n' "$dirpath" >&2
+    exit 1
+fi
 
-echo "Will store singularity images in $DIR"
+printf 'Will store singularity images in "%s"\n' "$dirpath"
 
-for IMG in $( cat conf/singularity.config | grep shub | awk '{print $NF}' ); do
-    IMG=$( echo $IMG | sed 's/"//g')
-    STORE=$( echo $IMG | sed 's.shub://..;s./.-.g;s.:.-.g;s/$/.img/' )
-    if [ -f "$DIR/$STORE" ]; then
-        continue
+awk '/shub:/ { gsub("\"", ""); print $NF }' conf/singularity.config |
+while read -r image; do
+    store=${image#shub://}
+    store=${store//[:\/]/-}.img
+    if [ ! -f "$dirpath/$store" ]; then
+        printf '%s\n' "$store"
+        singularity pull --name "$dirpath/$store" "$image"
     fi
-    echo $STORE
-    singularity pull --name "$DIR/$STORE" "$IMG"
 done
